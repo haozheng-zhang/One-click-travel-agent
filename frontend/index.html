@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一键出行智能体 - MVP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .result-item {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .result-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        
+        .result-value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+        }
+        
+        .success {
+            color: #388e3c;
+            background: #f1f8e9;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #667eea;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #1976d2;
+            margin-bottom: 20px;
+        }
+        
+        .examples {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .examples-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .example-btn {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            text-align: left;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .example-btn:hover {
+            background: #eeeeee;
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ 一键出行</h1>
+            <p class="subtitle">智能出行助手 - MVP 版本</p>
+        </header>
+        
+        <div class="card">
+            <div class="info-box">
+                💡 TIP: 用自然语言描述你的出行需求，系统会自动拆解并补全信息
+            </div>
+            
+            <form id="planningForm">
+                <div class="input-group">
+                    <label for="userInput">描述你的出行需求</label>
+                    <textarea
+                        id="userInput"
+                        placeholder="例如：帮我规划3月20号从北京到云南大理的自驾游，3天2晚，人均预算2000"
+                        required
+                    ></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="userId">用户ID (可选)</label>
+                    <input
+                        type="text"
+                        id="userId"
+                        placeholder="用于记录和追踪"
+                    />
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">🚀 解析需求</button>
+                    <button type="reset" class="btn-secondary">清空</button>
+                </div>
+            </form>
+            
+            <div id="result" class="result">
+                <div class="result-title" id="resultTitle"></div>
+                <div id="resultContent"></div>
+            </div>
+            
+            <div class="examples">
+                <div class="examples-title">📌 快速示例:</div>
+                <button class="example-btn" onclick="fillExample(0)">北京→大理自驾游，3天，人均2000</button>
+                <button class="example-btn" onclick="fillExample(1)">3月25号从上海去杭州，2天1晚</button>
+                <button class="example-btn" onclick="fillExample(2)">云南环线：昆明→大理→丽江，6天5晚</button>
+                <button class="example-btn" onclick="fillExample(3)">我想春节看樱花，去武汉或日本</button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>💬 智能出行系统 v0.1.0 | 后端服务需在 localhost:8000 运行</p>
+        </footer>
+    </div>
+    
+    <script>
+        const examples = [
+            "帮我规划3月20号从北京到云南大理的自驾游，3天2晚，人均预算2000",
+            "我想3月25号从上海去杭州，2天1晚",
+            "规划一个云南环线：昆明→大理→丽江，6天5晚，2个人，3000块钱一个人",
+            "我想在春节期间去看樱花，考虑武汉或者日本，大概7天，一个人，预算5000"
+        ];
+        
+        function fillExample(index) {
+            document.getElementById('userInput').value = examples[index];
+            document.getElementById('userInput').focus();
+        }
+        
+        document.getElementById('planningForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userInput = document.getElementById('userInput').value.trim();
+            const userId = document.getElementById('userId').value.trim();
+            
+            if (!userInput) {
+                alert('请输入出行需求');
+                return;
+            }
+            
+            await submitRequest(userInput, userId);
+        });
+        
+        async function submitRequest(userInput, userId) {
+            const resultDiv = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+            
+            // 显示加载状态
+            resultDiv.classList.add('show');
+            resultTitle.innerHTML = '<div class="loading"><span class="spinner"></span>正在解析需求...</div>';
+            resultContent.innerHTML = '';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/parse-intent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_input: userInput,
+                        user_id: userId || undefined
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // 显示结果
+                displayResult(data);
+                
+            } catch (error) {
+                resultTitle.innerHTML = '❌ 请求失败';
+                resultTitle.style.color = '#d32f2f';
+                resultContent.innerHTML = `
+                    <div style="color: #d32f2f; font-size: 13px;">
+                        无法连接到后端服务。<br>
+                        请确保：<br>
+                        1. 后端服务已启动 (python main.py)<br>
+                        2. 服务运行在 http://localhost:8000<br>
+                        3. Kimi API Key 已配置<br>
+                        <br>
+                        错误信息: ${error.message}
+                    </div>
+                `;
+                console.error('Error:', error);
+            }
+        }
+        
+        function displayResult(data) {
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+            
+            if (data.success) {
+                resultTitle.innerHTML = '✅ ' + data.message;
+                resultTitle.style.color = '#388e3c';
+                
+                const intent = data.intent;
+                
+                let html = '<div>';
+                
+                if (intent) {
+                    html += `
+                        <div class="result-item">
+                            <div class="result-label">🎯 识别意图</div>
+                            <div class="result-value">${intent.intent_type} (置信度: ${(intent.confidence * 100).toFixed(0)}%)</div>
+                        </div>
+                        
+                        <div class="result-item">
+                            <div class="result-label">📍 路线</div>
+                            <div class="result-value">${intent.origin || '?'} → ${intent.destination || '?'}</div>
+                        </div>
+                        
+                        <div class="result-item">
+                            <div class="result-label">📅 时间</div>
+                            <div class="result-value">
+                                ${intent.departure_date ? intent.departure_date + ' (出发)' : '未指定'}<br>
+                                ${intent.return_date ? intent.return_date + ' (返回)' : ''}<br>
+                                ${intent.duration_days ? '共 ' + intent.duration_days + ' 天' : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="result-item">
+                            <div class="result-label">👥 出行人数</div>
+                            <div class="result-value">${intent.person_count} 人</div>
+                        </div>
+                        
+                        <div class="result-item">
+                            <div class="result-label">🚗 交通方式</div>
+                            <div class="result-value">${intent.transport_mode || '未指定'}</div>
+                        </div>
+                        
+                        <div class="result-item">
+                            <div class="result-label">💰 人均预算</div>
+                            <div class="result-value">¥${intent.budget_per_person ? intent.budget_per_person.toLocaleString() : '未指定'}</div>
+                        </div>
+                    `;
+                    
+                    if (intent.auto_filled_fields && intent.auto_filled_fields.length > 0) {
+                        html += `
+                            <div class="result-item">
+                                <div class="result-label">🔄 自动补全字段</div>
+                                <div class="result-value">${intent.auto_filled_fields.join(', ')}</div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += `
+                        <div class="result-item">
+                            <div class="result-label">💡 建议</div>
+                            <div class="result-value">${data.suggestions.join('<br>')}</div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="result-item">
+                        <div class="result-label">➡️ 下一步</div>
+                        <div class="result-value">${data.next_step}</div>
+                    </div>
+                `;
+                
+                html += '</div>';
+                resultContent.innerHTML = html;
+                
+            } else {
+                resultTitle.innerHTML = '❌ 意图识别失败';
+                resultTitle.style.color = '#d32f2f';
+                
+                let html = `<div class="result-value" style="color: #d32f2f;">`;
+                html += data.message || '无法理解用户需求';
+                
+                if (data.suggestions && data.suggestions.length > 0) {
+                    html += '<br><br>建议:<br>';
+                    html += data.suggestions.join('<br>');
+                }
+                
+                html += '</div>';
+                resultContent.innerHTML = html;
+            }
+        }
+    </script>
+</body>
+</html>
