@@ -136,7 +136,7 @@ async def test_deepseek_connection():
         return {
             "status": "success",
             "message": "✓ Deepseek API 连接正常",
-            "model": settings.DEEPSEEK_MODEL,
+            "model": settings.LLM_MODEL_NAME,
             "response_preview": response.content[:100] + "..."
         }
     
@@ -162,7 +162,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "travel-planning",
-        "deepseek_configured": bool(settings.DEEPSEEK_API_KEY)
+        "deepseek_configured": bool(settings.LLM_API_KEY)
     }
 
 

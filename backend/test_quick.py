@@ -1,7 +1,7 @@
 """
 快速测试脚本 - 无需启动服务，直接测试意图解析
 """
-
+import logging
 import asyncio
 import logging
 import sys
@@ -28,9 +28,9 @@ async def test_intent_parsing():
         from app.config import settings
         
         # 检查 API Key
-        if not settings.KIMI_API_KEY or settings.KIMI_API_KEY == "your_kimi_api_key_here":
-            print("❌ Kimi API Key 未配置！")
-            print("   请在 .env 文件中设置 KIMI_API_KEY")
+        if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your_deepseek_api_key_here":
+            print("❌ deepseek API Key 未配置！")
+            print("   请在 .env 文件中设置 DEEPSEEK_API_KEY")
             return False
         
         # 测试样例
@@ -63,7 +63,8 @@ async def test_intent_parsing():
             if result.success:
                 intent = result.travel_intent
                 
-                print(f"✓ 意图识别成功")
+                #print(f"✓ 意图识别成功")
+                logging.debug("✓ 意图识别成功")
                 print(f"  置信度: {intent.confidence:.0%}")
                 print(f"  意图类型: {intent.intent_type}")
                 print(f"\n  提取的参数:")
