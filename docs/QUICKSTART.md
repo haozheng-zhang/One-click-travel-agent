@@ -18,8 +18,8 @@ cd c:\一键出行\backend
 # 创建 .env 文件
 cp .env.example .env
 
-# 编辑 .env 文件，填入你的 Kimi API Key
-# KIMI_API_KEY=sk-xxxxxxxxxxxx
+# 编辑 .env 文件，填入你的 Deepseek API Key
+# DEEPSEEK_API_KEY=sk-xxxxxxxxxxxx
 ```
 
 ### 第三步：安装依赖

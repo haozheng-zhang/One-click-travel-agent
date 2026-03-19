@@ -43,7 +43,7 @@ async def parse_user_intent(request: PlanningRequest, background_tasks: Backgrou
     **第一步：意图解析与核心需求提取**
     
     通过大语言模型，精准拆解用户需求的核心参数，自动补全默认规则。
-    使用 LangChain + Kimi 完成。
+    使用 LangChain + Deepseek 完成。
     
     ### 示例输入：
     ```
@@ -113,16 +113,16 @@ async def parse_user_intent(request: PlanningRequest, background_tasks: Backgrou
         )
 
 
-@router.get("/test-kimi")
-async def test_kimi_connection():
+@router.get("/test-deepseek")
+async def test_deepseek_connection():
     """
-    测试 Kimi API 连接
-    用于验证 Kimi API Key 和网络连接是否正常
+    测试 Deepseek API 连接
+    用于验证 Deepseek API Key 和网络连接是否正常
     """
     try:
         from app.core.llm import get_llm
         
-        logger.info("测试 Kimi 连接...")
+        logger.info("测试 Deepseek 连接...")
         
         # 获取 LLM 实例（会自动初始化）
         llm = get_llm()
@@ -131,12 +131,12 @@ async def test_kimi_connection():
         test_input = "你好，请简单确认你的名字和能力。"
         response = await llm.ainvoke(test_input)
         
-        logger.info("✓ Kimi 连接成功")
+        logger.info("✓ Deepseek 连接成功")
         
         return {
             "status": "success",
-            "message": "✓ Kimi API 连接正常",
-            "model": settings.KIMI_MODEL,
+            "message": "✓ Deepseek API 连接正常",
+            "model": settings.DEEPSEEK_MODEL,
             "response_preview": response.content[:100] + "..."
         }
     
@@ -145,10 +145,10 @@ async def test_kimi_connection():
         return {
             "status": "error",
             "message": f"配置错误: {str(e)}",
-            "hint": "请检查 .env 文件中是否设置了 KIMI_API_KEY"
+            "hint": "请检查 .env 文件中是否设置了 DEEPSEEK_API_KEY"
         }
     except Exception as e:
-        logger.error(f"Kimi 连接失败: {str(e)}")
+        logger.error(f"Deepseek 连接失败: {str(e)}")
         return {
             "status": "error",
             "message": f"连接失败: {str(e)}",
@@ -162,7 +162,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "travel-planning",
-        "kimi_configured": bool(settings.KIMI_API_KEY)
+        "deepseek_configured": bool(settings.DEEPSEEK_API_KEY)
     }
 
 

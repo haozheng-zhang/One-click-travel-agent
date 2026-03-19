@@ -5,6 +5,7 @@
 import os
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from dotenv import load_dotenv
 
 from fastapi import FastAPI
@@ -12,8 +13,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import travel_planning
 from app.config import settings
 
-# 加载环境变量
-load_dotenv()
+# 加载环境变量 - 优先加载 .env.local，再加载 .env
+env_local_path = Path(__file__).parent / ".env.local"
+if env_local_path.exists():
+    load_dotenv(env_local_path)
+else:
+    load_dotenv()
 
 # 日志配置
 logging.basicConfig(
@@ -28,10 +33,10 @@ async def lifespan(app: FastAPI):
     # 启动事件
     logger.info("🚀 一键出行智能体启动")
     logger.info(f"环境: {settings.ENVIRONMENT}")
-    if settings.KIMI_API_KEY:
-        logger.info("✓ Kimi API Key 已配置")
+    if settings.DEEPSEEK_API_KEY:
+        logger.info("✓ Deepseek API Key 已配置")
     else:
-        logger.warning("⚠️  Kimi API Key 未配置，请在 .env 文件中设置")
+        logger.warning("⚠️  Deepseek API Key 未配置，请在 .env 文件中设置")
     yield
     # 关闭事件
     logger.info("🛑 一键出行智能体关闭")

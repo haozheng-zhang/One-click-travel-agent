@@ -6,6 +6,10 @@ import os
 import sys
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
+
+# 加载 .env 文件
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +20,7 @@ def check_python_version():
         print("❌ Python 版本过低，需要 3.10 或更高")
         sys.exit(1)
     print(f"✓ Python 版本: {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+    return True
 
 
 def check_env_file():
@@ -35,19 +40,19 @@ def check_env_file():
     return True
 
 
-def check_kimi_api_key():
-    """检查 Kimi API Key"""
-    api_key = os.getenv("KIMI_API_KEY")
+def check_deepseek_api_key():
+    """检查 Deepseek API Key"""
+    api_key = os.getenv("DEEPSEEK_API_KEY")
     
-    if not api_key or api_key == "your_kimi_api_key_here":
-        print("❌ KIMI_API_KEY 未配置或使用了默认值")
-        print("   请修改 .env 文件，设置实际的 Kimi API Key")
+    if not api_key or api_key == "your_deepseek_api_key_here":
+        print("❌ DEEPSEEK_API_KEY 未配置或使用了默认值")
+        print("   请修改 .env 文件，设置实际的 Deepseek API Key")
         print("   获取方式: https://console.moonshot.cn")
         return False
     
     # 只显示前几个字符和后几个字符
     masked_key = api_key[:4] + "***" + api_key[-4:]
-    print(f"✓ Kimi API Key 已配置: {masked_key}")
+    print(f"✓ Deepseek API Key 已配置: {masked_key}")
     return True
 
 
@@ -60,7 +65,7 @@ def main():
     checks = [
         check_python_version,
         check_env_file,
-        check_kimi_api_key,
+        check_deepseek_api_key,
     ]
     
     all_passed = True
