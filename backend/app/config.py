@@ -4,14 +4,14 @@
 
 import os
 from typing import Optional
-from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
+# from pydantic import ConfigDict
 
 
 class Settings(BaseSettings):
     """应用配置"""
     
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore"  # 忽略额外的环境变量
@@ -27,10 +27,22 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = True
     
+    # ========== LLM 通用配置 ==========
+    # 用户可自由设置这些通用字段
+    LLM_API_KEY: Optional[str] = None        # 通用 API Key（优先使用）
+    LLM_BASE_URL: Optional[str] = None       # 通用 API 地址（优先使用）
+    LLM_MODEL_NAME: str = ""                 # 通用模型名称
+
+
     # LLM 配置 (Deepseek)
-    DEEPSEEK_API_KEY: Optional[str] = None
-    DEEPSEEK_MODEL: str = "deepseek-chat"  # Deepseek 的聊天模型
-    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com/v1"
+    # LLM_API_KEY: Optional[str] = None
+    # LLM_BASE_URL:str="https://api.deepseek.com/v1"
+    # OPENAI_API_KEY: Optional[str] = None
+    # OPENAI_BASE_URL:str="https://us.api.openai.com/v1"
+    # ANTHROPIC_API_KEY: Optional[str] = None
+    # ANTHROPIC_BASE_URL:str="https://api.anthropic.com"
+    
+    # MODEL_NAME: str = "deepseek-chat"  # Deepseek 的聊天模型
     
     # LangChain 配置
     LANGCHAIN_VERBOSE: bool = True

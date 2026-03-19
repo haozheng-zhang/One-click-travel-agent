@@ -40,21 +40,33 @@ def check_env_file():
     return True
 
 
-def check_deepseek_api_key():
+def check_api_key():
     """检查 Deepseek API Key"""
-    api_key = os.getenv("DEEPSEEK_API_KEY")
+    api_key = os.getenv("LLM_API_KEY")
     
-    if not api_key or api_key == "your_deepseek_api_key_here":
-        print("❌ DEEPSEEK_API_KEY 未配置或使用了默认值")
-        print("   请修改 .env 文件，设置实际的 Deepseek API Key")
-        print("   获取方式: https://console.moonshot.cn")
+    if not api_key or api_key == "your_llm_api_key_here":
+        print("❌ LLM_API_KEY 未配置或使用了默认值")
+        print("   请修改 .env 文件，设置实际的 API Key")
+        #print("   获取方式: https://console.moonshot.cn")
         return False
     
     # 只显示前几个字符和后几个字符
     masked_key = api_key[:4] + "***" + api_key[-4:]
-    print(f"✓ Deepseek API Key 已配置: {masked_key}")
+    print(f"✓ LLM API Key 已配置: {masked_key}")
     return True
 
+
+def check_model_name():
+    """检查 Deepseek 模型名称配置"""
+    model_name = os.getenv("LLM_MODEL_NAME", "")  # 默认值来自 config.py
+    
+    # 检查模型名称是否为空
+    if not model_name or not model_name.strip():
+        print("   请在 .env 文件中设置 MODEL_NAME")
+        return False
+    
+    print(f"✓ Deepseek 模型名称: {model_name}")
+    return True
 
 def main():
     """初始化检查"""
@@ -65,7 +77,8 @@ def main():
     checks = [
         check_python_version,
         check_env_file,
-        check_deepseek_api_key,
+        check_api_key,
+        check_model_name
     ]
     
     all_passed = True

@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     # 启动事件
     logger.info("🚀 一键出行智能体启动")
     logger.info(f"环境: {settings.ENVIRONMENT}")
-    if settings.DEEPSEEK_API_KEY:
+    if settings.LLM_API_KEY:
         logger.info("✓ Deepseek API Key 已配置")
     else:
         logger.warning("⚠️  Deepseek API Key 未配置，请在 .env 文件中设置")
