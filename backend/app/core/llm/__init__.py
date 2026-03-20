@@ -3,8 +3,10 @@ LLM 集成模块 - Deepseek 模型配置
 """
 
 import logging
-from typing import Optional, Any
-from langchain_community.chat_models import ChatOpenAI
+from typing import Optional, Union
+#from langchain_community.chat_models import ChatOpenAI
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain.chat_models import init_chat_model
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -13,10 +15,10 @@ logger = logging.getLogger(__name__)
 class LLMManager:
     """Deepseek LLM 管理器"""
     
-    _instance: Optional[ChatOpenAI] = None
+    _instance: Optional[BaseChatModel] = None
     
     @classmethod
-    def get_llm(cls) -> ChatOpenAI:
+    def get_llm(cls) -> BaseChatModel|None:
         """
         获取或创建 Deepseek LLM 实例
         
@@ -30,16 +32,23 @@ class LLMManager:
             
             logger.info(f"正在初始化 Deepseek LLM (模型: {settings.LLM_MODEL_NAME})")
             
-            cls._instance = ChatOpenAI(
-                model=settings.LLM_MODEL_NAME,
-                api_key=settings.LLM_API_KEY,
-                base_url=settings.LLM_BASE_URL,
-                temperature=0.7,  # 平衡创意和准确性
-                max_tokens=2000,
-                request_timeout=60
-            )
-            
-            logger.info("✓ Deepseek LLM 初始化成功")
+            try:
+                # 使用 LangChain 0.2.0+ 的 init_chat_model
+                cls._instance = init_chat_model(
+                    model=settings.LLM_MODEL_NAME,
+                    api_key=settings.LLM_API_KEY,
+                    base_url=settings.LLM_BASE_URL,
+                    temperature=0.7,      # 平衡创意和准确性
+                    max_tokens=2000,
+                    request_timeout=60
+                )
+                
+                logger.info("✓ LLM 初始化成功")
+                
+            except Exception as e:
+                logger.error(f"LLM 初始化失败: {str(e)}")
+                raise ValueError(f"LLM 初始化失败: {str(e)}")
+        
         
         return cls._instance
     
@@ -49,6 +58,6 @@ class LLMManager:
         cls._instance = None
 
 
-def get_llm() -> ChatOpenAI:
+def get_llm() -> BaseChatModel|None:
     """方便函数 - 获取 LLM 实例"""
     return LLMManager.get_llm()
