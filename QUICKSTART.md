@@ -2,14 +2,7 @@
 
 ## ⚡ 5分钟快速启动
 
-### 第一步：获取 Kimi API Key
-
-1. 访问 [Kimi 控制台](https://console.moonshot.cn)
-2. 注册或登录账户
-3. 创建新的 API Key
-4. 复制 API Key
-
-### 第二步：配置环境
+### 第一步：配置环境
 
 ```bash
 # 进入 backend 目录
@@ -22,7 +15,7 @@ cp .env.example .env
 # DEEPSEEK_API_KEY=sk-xxxxxxxxxxxx
 ```
 
-### 第三步：构建docker镜像并启动
+### 第二步：构建docker镜像并启动
 
 ```bash
 # 进入项目根目录
@@ -185,7 +178,7 @@ message: "连接失败: ..."
 
 成功完成第一步后，您可以：
 
-1. 查看 [完整架构文档](architecture.md) 了解整体设计
+1. 查看 [完整架构文档](docs/architecture.md) 了解整体设计
 2. 开始实现第二步：数据查询框架
 3. 根据需要调整 NLU 模块的参数
 
@@ -197,4 +190,4 @@ message: "连接失败: ..."
 
 ---
 
-**需要帮助？** 检查日志输出或查看 [完整文档](architecture.md)
+**需要帮助？** 检查日志输出或查看 [完整文档](docs/architecture.md)

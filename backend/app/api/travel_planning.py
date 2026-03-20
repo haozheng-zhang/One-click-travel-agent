@@ -43,7 +43,7 @@ async def parse_user_intent(request: PlanningRequest, background_tasks: Backgrou
     **第一步：意图解析与核心需求提取**
     
     通过大语言模型，精准拆解用户需求的核心参数，自动补全默认规则。
-    使用 LangChain + Deepseek 完成。
+    使用 LangChain + LLM 完成。
     
     ### 示例输入：
     ```
@@ -113,16 +113,16 @@ async def parse_user_intent(request: PlanningRequest, background_tasks: Backgrou
         )
 
 
-@router.get("/test-deepseek")
-async def test_deepseek_connection():
+@router.get("/test-LLM")
+async def test_LLM_connection():
     """
-    测试 Deepseek API 连接
-    用于验证 Deepseek API Key 和网络连接是否正常
+    测试 LLM API 连接
+    用于验证 LLM API Key 和网络连接是否正常
     """
     try:
         from app.core.llm import get_llm
         
-        logger.info("测试 Deepseek 连接...")
+        logger.info("测试 LLM 连接...")
         
         # 获取 LLM 实例（会自动初始化）
         llm = get_llm()
@@ -131,11 +131,11 @@ async def test_deepseek_connection():
         test_input = "你好，请简单确认你的名字和能力。"
         response = await llm.ainvoke(test_input)
         
-        logger.info("✓ Deepseek 连接成功")
+        logger.info("✓ LLM 连接成功")
         
         return {
             "status": "success",
-            "message": "✓ Deepseek API 连接正常",
+            "message": "✓ LLM API 连接正常",
             "model": settings.LLM_MODEL_NAME,
             "response_preview": response.content[:100] + "..."
         }
@@ -145,10 +145,10 @@ async def test_deepseek_connection():
         return {
             "status": "error",
             "message": f"配置错误: {str(e)}",
-            "hint": "请检查 .env 文件中是否设置了 DEEPSEEK_API_KEY"
+            "hint": "请检查 .env 文件中是否设置了 LLM_API_KEY"
         }
     except Exception as e:
-        logger.error(f"Deepseek 连接失败: {str(e)}")
+        logger.error(f"LLM 连接失败: {str(e)}")
         return {
             "status": "error",
             "message": f"连接失败: {str(e)}",
@@ -162,7 +162,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "travel-planning",
-        "deepseek_configured": bool(settings.LLM_API_KEY)
+        "LLM_configured": bool(settings.LLM_API_KEY)
     }
 
 

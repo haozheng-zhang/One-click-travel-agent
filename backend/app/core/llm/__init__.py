@@ -1,5 +1,5 @@
 """
-LLM 集成模块 - Deepseek 模型配置
+LLM 集成模块 - 模型配置
 """
 
 import logging
@@ -13,24 +13,22 @@ logger = logging.getLogger(__name__)
 
 
 class LLMManager:
-    """Deepseek LLM 管理器"""
+    """LLM 管理器"""
     
     _instance: Optional[BaseChatModel] = None
     
     @classmethod
     def get_llm(cls) -> BaseChatModel|None:
         """
-        获取或创建 Deepseek LLM 实例
-        
-        Deepseek 兼容 OpenAI API 接口，所以使用 ChatOpenAI 初始化
+        获取或创建 LLM 实例
         """
         if cls._instance is None:
             if not settings.LLM_API_KEY:
                 raise ValueError(
-                    "Deepseek API Key 未配置。请在 .env 文件中设置 DEEPSEEK_API_KEY"
+                    "LLM API Key 未配置。请在 .env 文件中设置 LLM_API_KEY"
                 )
             
-            logger.info(f"正在初始化 Deepseek LLM (模型: {settings.LLM_MODEL_NAME})")
+            logger.info(f"正在初始化 LLM (模型: {settings.LLM_MODEL_NAME})")
             
             try:
                 # 使用 LangChain 0.2.0+ 的 init_chat_model

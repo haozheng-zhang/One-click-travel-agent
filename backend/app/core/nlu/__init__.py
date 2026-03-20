@@ -150,7 +150,7 @@ class TravelNLUProcessor:
             )
             
             # 调用 LLM
-            logger.debug("调用 Deepseek LLM 进行意图解析...")
+            logger.debug("调用 LLM LLM 进行意图解析...")
             response = await self.llm.ainvoke(formatted_prompt)
             
             # 解析响应
