@@ -22,22 +22,14 @@ cp .env.example .env
 # DEEPSEEK_API_KEY=sk-xxxxxxxxxxxx
 ```
 
-### 第三步：安装依赖
+### 第三步：构建docker镜像并启动
 
 ```bash
-pip install -r requirements.txt
-```
+# 进入项目根目录
+cd ..
 
-### 第四步：检查配置
-
-```bash
-python check_and_start.py
-```
-
-### 第五步：启动服务
-
-```bash
-python main.py
+#构建docker镜像并启动（前提是你已经安装好docker应用程序）
+docker compose up --build
 ```
 
 启动成功后，你会看到：

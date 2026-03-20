@@ -1,4 +1,4 @@
-name: Python Tests
+name: Docker Integration CI
 
 on:
   push:
@@ -7,39 +7,29 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  docker-build-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11']
-
+    
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
+    - name: create env file
       run: |
-        python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
+        echo "LLM_API_KEY=${{ secrets.LLM_API_KEY }}" >> .env
+        echo "PORT=8000" >> .env
 
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        flake8 backend/app --count --select=E9,F63,F7,F82 --show-source --statistics
-      continue-on-error: true
+    - name: Build and run Docker containers
+      run: docker compose up --build -d
 
-    - name: Type check with mypy
+    - name: Check container status
       run: |
-        pip install mypy
-        mypy backend/app --ignore-missing-imports
-      continue-on-error: true
+        sleep 5
+        docker compose ps
+        
+    - name: Run tests inside container
+      run: docker compose exec -T server pytest
 
-    - name: Run tests with pytest
-      run: |
-        cd backend
-        pytest tests/ -v --tb=short
-      continue-on-error: true
+    - name: Dump docker logs on failure
+      if: failure()
+      run: docker compose logs
