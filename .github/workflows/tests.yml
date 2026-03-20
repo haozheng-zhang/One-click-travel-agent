@@ -14,13 +14,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: create env file
-      working-directory: ./backend
+    - name: Setup environment file
       run: |
-        echo "DEEPSEEK_API_KEY=${{ secrets.LLM_API_KEY }}" > .env
-        echo "PORT=8000" >> .env
-        echo "LOG_LEVEL=info" >> .env
-
+        cd backend
+        cp .env.example .env
+        
+        # 使用 sed 命令将模板中的占位符替换为真实的 GitHub Secret
+        sed -i 's/LLM_API_KEY=.*/LLM_API_KEY=${{ secrets.LLM_API_KEY }}/' .env
+        cd ..
+        
     - name: Build and run Docker containers
       run: docker compose up --build -d
 
