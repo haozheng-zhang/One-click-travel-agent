@@ -15,9 +15,11 @@ jobs:
       uses: actions/checkout@v4
 
     - name: create env file
+      working-directory: ./backend
       run: |
-        echo "LLM_API_KEY=${{ secrets.LLM_API_KEY }}" >> .env
+        echo "DEEPSEEK_API_KEY=${{ secrets.LLM_API_KEY }}" > .env
         echo "PORT=8000" >> .env
+        echo "LOG_LEVEL=info" >> .env
 
     - name: Build and run Docker containers
       run: docker compose up --build -d
