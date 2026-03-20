@@ -13,7 +13,7 @@
 
 ```bash
 # 进入 backend 目录
-cd c:\一键出行\backend
+cd backend
 
 # 创建 .env 文件
 cp .env.example .env
