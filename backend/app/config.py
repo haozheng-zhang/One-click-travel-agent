@@ -34,15 +34,15 @@ class Settings(BaseSettings):
     LLM_MODEL_NAME: str = ""                 # 通用模型名称
 
 
-    # LLM 配置 (Deepseek)
+    # LLM 配置 (LLM)
     # LLM_API_KEY: Optional[str] = None
-    # LLM_BASE_URL:str="https://api.deepseek.com/v1"
+    # LLM_BASE_URL:str="https://api.LLM.com/v1"
     # OPENAI_API_KEY: Optional[str] = None
     # OPENAI_BASE_URL:str="https://us.api.openai.com/v1"
     # ANTHROPIC_API_KEY: Optional[str] = None
     # ANTHROPIC_BASE_URL:str="https://api.anthropic.com"
     
-    # MODEL_NAME: str = "deepseek-chat"  # Deepseek 的聊天模型
+    # MODEL_NAME: str = "LLM-chat"  # LLM 的聊天模型
     
     # LangChain 配置
     LANGCHAIN_VERBOSE: bool = True

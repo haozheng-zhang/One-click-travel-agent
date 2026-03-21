@@ -16,6 +16,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
+ENV PYTHONPATH="${PYTHONPATH}:/app/backend"
+
 WORKDIR /app
 
 # Create a non-privileged user that the app will run under.
@@ -48,4 +50,4 @@ COPY . .
 EXPOSE 8000
 
 # Run the application.
-CMD python3 backend/main.py
+CMD python3 -m backend

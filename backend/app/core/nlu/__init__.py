@@ -14,8 +14,8 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from app.core.llm import get_llm
-from app.config import settings
+from backend.app.core.llm import get_llm
+from backend.app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ class TravelNLUProcessor:
             )
             
             # 调用 LLM
-            logger.debug("调用 Deepseek LLM 进行意图解析...")
+            logger.debug("调用 LLM LLM 进行意图解析...")
             response = await self.llm.ainvoke(formatted_prompt)
             
             # 解析响应

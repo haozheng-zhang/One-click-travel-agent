@@ -41,7 +41,7 @@ def check_env_file():
 
 
 def check_api_key():
-    """检查 Deepseek API Key"""
+    """检查 LLM API Key"""
     api_key = os.getenv("LLM_API_KEY")
     
     if not api_key or api_key == "your_llm_api_key_here":
@@ -57,7 +57,7 @@ def check_api_key():
 
 
 def check_model_name():
-    """检查 Deepseek 模型名称配置"""
+    """检查 LLM 模型名称配置"""
     model_name = os.getenv("LLM_MODEL_NAME", "")  # 默认值来自 config.py
     
     # 检查模型名称是否为空
@@ -65,7 +65,7 @@ def check_model_name():
         print("   请在 .env 文件中设置 MODEL_NAME")
         return False
     
-    print(f"✓ Deepseek 模型名称: {model_name}")
+    print(f"✓ LLM 模型名称: {model_name}")
     return True
 
 def main():

@@ -3,7 +3,7 @@ API 路由初始化
 """
 
 from fastapi import APIRouter
-from app.api import travel_planning
+from . import travel_planning
 
 router = APIRouter(prefix="/api/v1", tags=["API v1"])
 

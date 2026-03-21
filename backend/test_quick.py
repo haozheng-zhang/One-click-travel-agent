@@ -28,9 +28,9 @@ async def test_intent_parsing():
         from app.config import settings
         
         # 检查 API Key
-        if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your_deepseek_api_key_here":
-            print("❌ deepseek API Key 未配置！")
-            print("   请在 .env 文件中设置 DEEPSEEK_API_KEY")
+        if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your_LLM_api_key_here":
+            print("❌ LLM API Key 未配置！")
+            print("   请在 .env 文件中设置 LLM_API_KEY")
             return False
         
         # 测试样例
