@@ -76,13 +76,13 @@ async def parse_user_intent(request: PlanningRequest, background_tasks: Backgrou
             return PlanningResponse(
                 success=False,
                 message=nlu_result.error_message or "无法理解用户需求",
-                next_step="请提供更清晰的出行需求描述，例如：'从北京到上海，3月20号，2人'",
-                suggestions=nlu_result.suggestions
+                suggestions=nlu_result.suggestions,
+                next_step=nlu_result.next_step
             )
         
         # 解析成功
-        intent: TravelIntent = nlu_result.travel_intent
-        
+        intent: TravelIntent|None = nlu_result.travel_intent
+        assert intent is not None, "TravelIntent should be initialized"
         logger.info(f"✓ 意图解析成功 (置信度: {intent.confidence})")
         logger.info(f"  出发地: {intent.origin}, 目的地: {intent.destination}")
         logger.info(f"  出发日期: {intent.departure_date}, 交通方式: {intent.transport_mode}")
@@ -121,16 +121,17 @@ async def test_LLM_connection():
     用于验证 LLM API Key 和网络连接是否正常
     """
     try:
-        from app.core.llm import get_llm
+        from app.core.llm import get_agent
         
         logger.info("测试 LLM 连接...")
         
         # 获取 LLM 实例（会自动初始化）
-        llm = get_llm()
+        agent = get_agent()
         
         # 发送测试请求
         test_input = "你好，请简单确认你的名字和能力。"
-        response = await llm.ainvoke(test_input)
+        assert agent is not None, "agent must be initialized"
+        response = await agent.ainvoke(test_input)
         
         logger.info("✓ LLM 连接成功")
         
