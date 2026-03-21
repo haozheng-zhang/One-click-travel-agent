@@ -20,9 +20,9 @@ jobs:
         cp .env.example .env
         
         # 使用 sed 命令将模板中的占位符替换为真实的 GitHub Secret
-        sed -i 's/LLM_API_KEY=.*/LLM_API_KEY=${{ secrets.LLM_API_KEY }}/' .env
-        sed -i 's/LLM_MODEL_NAME=.*/LLM_MODEL_NAME=${{ vars.LLM_MODEL_NAME }}/' .env
-        sed -i 's/LLM_BASE_URL=.*/LLM_BASE_URL=${{ vars.LLM_BASE_URL }}/' .env
+        sed -i 's|LLM_API_KEY=.*|LLM_API_KEY=${{ secrets.LLM_API_KEY }}|' .env
+        sed -i 's|LLM_MODEL_NAME=.*|LLM_MODEL_NAME=${{ vars.LLM_MODEL_NAME }}|' .env
+        sed -i 's|LLM_BASE_URL=.*|LLM_BASE_URL=${{ vars.LLM_BASE_URL }}|' .env
         cd ..
 
     - name: Build and run Docker containers
