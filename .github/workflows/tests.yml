@@ -34,7 +34,7 @@ jobs:
         docker compose ps
         
     - name: Run tests inside container
-      run: docker compose exec -T server pytest
+      run: docker compose exec -T server pytest -p no:cacheprovider
 
     - name: Dump docker logs on failure
       if: failure()

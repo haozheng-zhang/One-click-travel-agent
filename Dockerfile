@@ -42,11 +42,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 USER appuser
 
 # Copy the source code into the container.
-COPY --chown=appuser:appuser . .
+COPY . .
 
 # Expose the port that the application listens on.
 EXPOSE 8000
 
-RUN mkdir -p /app/.pytest_cache && chmod 755 /app/.pytest_cache
 # Run the application.
 CMD python3 -m backend
