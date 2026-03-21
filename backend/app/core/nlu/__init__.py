@@ -10,7 +10,7 @@
 import logging
 import json
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date,time
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -34,14 +34,14 @@ class TravelIntent(BaseModel):
     destination: Optional[str] = Field(None, description="目的地")
     
     # 时间信息
-    departure_date: Optional[str] = Field(None, description="出发日期 (格式: YYYY-MM-DD)")
-    departure_time: Optional[str] = Field(None, description="出发时间 (格式: HH:MM)")
-    return_date: Optional[str] = Field(None, description="返回日期 (格式: YYYY-MM-DD)")
-    return_time: Optional[str] = Field(None, description="返回时间 (格式: HH:MM)")
+    departure_date: Optional[date] = Field(None, description="出发日期")
+    departure_time: Optional[time] = Field(None, description="出发时间")
+    return_date: Optional[date] = Field(None, description="返回日期")
+    return_time: Optional[time] = Field(None, description="返回时间")
     duration_days: Optional[int] = Field(None, description="行程天数")
     
     # 出行人员
-    person_count: int = Field(default=2, description="出行人数")
+    person_count: int = Field(default=1, description="出行人数")
     travelers: List[str] = Field(default_factory=list, description="出行人信息列表")
     
     # 出行方式
@@ -52,8 +52,8 @@ class TravelIntent(BaseModel):
     preferences: Dict[str, Any] = Field(default_factory=dict, description="其他偏好设置")
     
     # 额外需求
-    hotel_needed: bool = Field(default=True, description="是否需要预订酒店")
-    ticket_needed: bool = Field(default=True, description="是否需要景区门票")
+    hotel_needed: bool = Field(default=False, description="是否需要预订酒店")
+    ticket_needed: bool = Field(default=False, description="是否需要景区门票")
     
     # 原文本
     raw_input: str = Field(..., description="用户原始输入")
@@ -68,8 +68,8 @@ class NLUResult(BaseModel):
     travel_intent: Optional[TravelIntent] = None
     error_message: Optional[str] = None
     suggestions: List[str] = Field(default_factory=list, description="后续建议")
-
-
+    next_step: List[str] = Field(default_factory=list, description="下一步操作")
+    missing_fields: List[str] = Field(default_factory=list, description="缺失的关键字段")
 # ==================== NLU 处理器 ====================
 
 class TravelNLUProcessor:
@@ -93,9 +93,6 @@ class TravelNLUProcessor:
 ## 重要规则：
 - 日期格式必须是 YYYY-MM-DD
 - 时间格式必须是 HH:MM（24小时制）
-- 人数没有特别说明时，默认为 {default_person_count} 人
-- 出发时间没有特别说明时，默认为 {default_departure_time}
-- 返回时间没有特别说明时，默认为 {default_return_time}
 - 如果用户没有明确指定出发日期，且是合理的请求，则假设是最近的相关日期
 - 置信度范围 0-1，如果用户输入不够清晰则置信度较低，但仍应尽力提取信息
 - auto_filled_fields 应该包含所有被自动补全或推断的字段名列表
@@ -143,13 +140,10 @@ class TravelNLUProcessor:
             
             # 准备提示词
             formatted_prompt = self.prompt.format(
-                user_input=user_input,
-                default_person_count=settings.DEFAULT_PERSON_COUNT,
-                default_departure_time=settings.DEFAULT_DEPARTURE_TIME,
-                default_return_time=settings.DEFAULT_RETURN_TIME
+                user_input=user_input
             )
             
-            # 调用 LLM
+            # 调用 LL
             logger.debug("调用 LLM LLM 进行意图解析...")
             response = await self.llm.ainvoke(formatted_prompt)
             
@@ -165,7 +159,8 @@ class TravelNLUProcessor:
                 return NLUResult(
                     success=True,
                     travel_intent=travel_intent,
-                    suggestions=self._generate_suggestions(travel_intent)
+                    suggestions=self._generate_suggestions(travel_intent),
+                    next_step=self._generate_nextstep(travel_intent)
                 )
             else:
                 logger.warning("无法解析 LLM 响应")
@@ -257,13 +252,18 @@ class TravelNLUProcessor:
         if intent.confidence < 0.7:
             suggestions.append("⚠️  意图识别置信度较低，建议用户进一步说明")
         
-        if intent.origin and intent.destination:
-            suggestions.append("✓ 将查询天气、交通、酒店等信息")
-        
         if not intent.budget_per_person:
             suggestions.append("💡 未指定预算，将使用通用推荐方案")
         
         return suggestions
+    def _generate_nextstep(self, intent: TravelIntent)->List[str]:
+        """根据提取的意图生成下一步的动作"""
+        nextsteps = []
+        if not intent.departure_date:
+            now = datetime.now()
+        if intent.origin and intent.destination:
+            nextsteps.append("✓ 将查询天气、交通、酒店等信息")
+        return nextsteps
 
 
 # ==================== 便利函数 ====================

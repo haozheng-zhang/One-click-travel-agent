@@ -32,7 +32,7 @@ class PlanningResponse(BaseModel):
     intent: Optional[dict] = None  # TravelIntent 的字典形式
     auto_filled_fields: List[str] = Field(default_factory=list)
     suggestions: List[str] = Field(default_factory=list)
-    next_step: str  # 下一步操作
+    next_step: List[str]  # 下一步操作
 
 
 # ==================== 路由端点 ====================
@@ -40,6 +40,7 @@ class PlanningResponse(BaseModel):
 @router.post("/parse-intent", response_model=PlanningResponse)
 async def parse_user_intent(request: PlanningRequest, background_tasks: BackgroundTasks):
     """
+    此函数没有被调用。
     **第一步：意图解析与核心需求提取**
     
     通过大语言模型，精准拆解用户需求的核心参数，自动补全默认规则。
@@ -88,7 +89,7 @@ async def parse_user_intent(request: PlanningRequest, background_tasks: Backgrou
         logger.info(f"  自动补全字段: {', '.join(intent.auto_filled_fields)}")
         
         # 确定下一步
-        next_step = _determine_next_step(intent)
+        next_step = nlu_result.next_step
         
         # 返回响应
         response = PlanningResponse(
@@ -164,33 +165,6 @@ async def health_check():
         "service": "travel-planning",
         "LLM_configured": bool(settings.LLM_API_KEY)
     }
-
-
-# ==================== 辅助函数 ====================
-
-def _determine_next_step(intent: TravelIntent) -> str:
-    """根据提取的意图确定下一步操作"""
-    
-    missing_fields = []
-    
-    if not intent.origin:
-        missing_fields.append("出发地")
-    if not intent.destination:
-        missing_fields.append("目的地")
-    if not intent.departure_date:
-        missing_fields.append("出发日期")
-    
-    if missing_fields:
-        return f"需要补充信息: {', '.join(missing_fields)}"
-    
-    if intent.confidence < 0.7:
-        return "意图识别置信度较低，建议用户进一步说明需求"
-    
-    if intent.origin and intent.destination and intent.departure_date:
-        return "进入第二步: 前置信息校验与多源数据查询"
-    
-    return "等待用户确认或进一步说明"
-
 
 async def _log_intent(user_id: Optional[str], intent: TravelIntent):
     """记录用户的出行意图（后台任务）"""

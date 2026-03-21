@@ -5,7 +5,9 @@ LLM 集成模块 - 模型配置
 import logging
 from typing import Optional, Union
 #from langchain_community.chat_models import ChatOpenAI
+from langchain.agents import create_agent
 from langchain_core.language_models.chat_models import BaseChatModel
+from backend.app.utils import get_current_time,weather_search
 from langchain.chat_models import init_chat_model
 from backend.app.config import settings
 
