@@ -7,7 +7,7 @@ from typing import Optional, Union
 #from langchain_community.chat_models import ChatOpenAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain.chat_models import init_chat_model
-from app.config import settings
+from backend.app.config import settings
 
 logger = logging.getLogger(__name__)
 

@@ -8,8 +8,8 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
-from app.core.nlu import parse_travel_intent, TravelIntent, NLUResult
-from app.config import settings
+from backend.app.core.nlu import parse_travel_intent, TravelIntent, NLUResult
+from backend.app.config import settings
 
 logger = logging.getLogger(__name__)
 
