@@ -14,7 +14,6 @@ from datetime import datetime, timedelta,date,time
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from backend.app.core.llm import get_agent
 from backend.app.config import settings
 
 logger = logging.getLogger(__name__)

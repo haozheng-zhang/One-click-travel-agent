@@ -5,9 +5,7 @@ LLM 集成模块 - 模型配置
 import logging
 from typing import Optional, Any
 #from langchain_community.chat_models import ChatOpenAI
-from langchain.agents import create_agent
 from langchain_core.language_models.chat_models import BaseChatModel
-from backend.app.utils import get_current_time
 from langchain.chat_models import init_chat_model
 from backend.app.config import settings
 
@@ -96,17 +94,17 @@ class LLMManager:
         
         
         return cls._llm_instance
-    @classmethod
-    def get_agent(cls) -> Any:
-        if cls._agent_instance is not None:
-            return cls._agent_instance
-        model=cls.get_llm()
-        assert model is not None, "Model must be initialized before creating agent"
-        cls._agent_instance = create_agent(
-            model=model,
-            system_prompt=cls._setup_prompt_template(),
-        )
-        return cls._agent_instance
+    # @classmethod
+    # def get_agent(cls) -> Any:
+    #     if cls._agent_instance is not None:
+    #         return cls._agent_instance
+    #     model=cls.get_llm()
+    #     assert model is not None, "Model must be initialized before creating agent"
+    #     cls._agent_instance = create_agent(
+    #         model=model,
+    #         system_prompt=cls._setup_prompt_template(),
+    #     )
+    #     return cls._agent_instance
 
     @classmethod
     def reset_instance(cls):
@@ -119,6 +117,6 @@ def get_llm() -> BaseChatModel:
     """方便函数 - 获取 agent 实例"""
     return LLMManager.get_llm()
 
-def get_agent() -> Any:
-    """方便函数 - 获取 agent 实例"""
-    return LLMManager.get_agent()
+# def get_agent() -> Any:
+#     """方便函数 - 获取 agent 实例"""
+#     return LLMManager.get_agent()
