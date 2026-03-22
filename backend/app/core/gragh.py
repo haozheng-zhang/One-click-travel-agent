@@ -1,9 +1,9 @@
-from typing import Annotated, List, Literal, Optional, TypedDict, Union,Dict
+from typing import Annotated, Literal, Optional, TypedDict
 from langgraph.graph import END, START, StateGraph, add_messages
 from pydantic import BaseModel, Field
 from backend.app.core.llm import get_llm
 from backend.app.utils.travel_intent_parser import TravelIntentReport, get_TravelIntentReport
-from backend.app.utils.weather_forcaster import WeatherReport, get_weather_service
+from backend.app.utils.weather_forecaster import WeatherReport, get_weather_service
 from langchain_core.messages import SystemMessage, HumanMessage
 
 def merge_travel_intent(old: Optional[TravelIntentReport], new: TravelIntentReport) -> TravelIntentReport:
@@ -15,10 +15,9 @@ def merge_travel_intent(old: Optional[TravelIntentReport], new: TravelIntentRepo
     # 提取新数据中非空的字段（LLM 本次发现的补全）
     new_data = new.model_dump(exclude_unset=True, exclude_none=True)
     for key, value in new_data.items():
-        if key == "extra_needed_and_preferences" and isinstance(value, List):
-            # 列表使用set去重合并
-            old_list = updated_data.get(key) or []
-            updated_data[key] = list(set(old_list + value))
+        if isinstance(value, set):
+            # set去重合并
+            updated_data[key] = (updated_data.get(key) or set()) | value
         elif isinstance(value, dict):
             # 字典去重合并
             old_val = updated_data.get(key) or {}
@@ -35,11 +34,11 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
     travel_intent: Annotated[Optional[TravelIntentReport], merge_travel_intent]
     weather:Optional[WeatherReport]
-    next_action:Dict[str,str|None]
+    next_action:dict[str,str|None]
 
 class MessageClassifier(BaseModel):
     """分析用户意图，决定更新什么业务模块"""
-    next_action: Dict[Literal["travel_intent", "weather", "general"],str] = Field(
+    next_action: dict[Literal["travel_intent", "weather", "general"],str] = Field(
         ...,
         description="key: 智能体将作出的下一步（一个或多个）行为，包括：'travel_intent' (更新出行规划), 'weather' (更新天气查询), 'general' (闲聊或无法识别的话题)" \
         "value: 提供给子智能体的查询或信息语句（可以为None），如“出发日期变更为下周五”“查询明天上海的天气”"
@@ -64,7 +63,7 @@ def classify_message(state: State):
 
 
 
-def router(state: State) -> List[str]:
+def router(state: State) -> list[str]:
     """
     根据 next_action 字典中的所有 Key，决定去往哪些节点。
     如果返回多个字符串，LangGraph 会并行执行。
@@ -99,7 +98,6 @@ graph_builder.add_node("travel_intent", travel_intent_node)
 graph_builder.add_node("weather", weather_node)
 
 graph_builder.add_edge(START, "classifier")
-graph_builder.add_edge("classifier", "router")
 
 graph_builder.add_conditional_edges(
     "classifier",

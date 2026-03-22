@@ -321,13 +321,13 @@ POST /update-reminder         # 更新提醒设置
   return_time: String,              // HH:MM 格式
   duration_days: Integer,           // 总天数
   person_count: Integer,            // 出行人数
-  travelers: List<Traveler>,        // 出行人详细信息
+  travelers: <Traveler>,        // 出行人详细信息
   transport_mode: String,           // 交通方式
   budget_per_person: Double,        // 人均预算
   preferences: Map<String, Any>,    // 其他偏好
   hotel_needed: Boolean,            // 是否需要酒店
   ticket_needed: Boolean,           // 是否需要门票
-  auto_filled_fields: List<String>, // 自动补全的字段列表
+  auto_filled_fields: <String>, // 自动补全的字段列表
   raw_input: String                 // 原始用户输入
 }
 ```

@@ -1,6 +1,6 @@
-from anyio import create_event
+# from anyio import create_event
 from pydantic import BaseModel, Field
-from typing import Optional,List,Dict,Any
+from typing import Optional,List,Any
 from datetime import date,time
 from backend.app.core.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
@@ -15,8 +15,8 @@ class TravelIntentReport(BaseModel):
     confidence: float = Field(default=0, description="意图识别置信度 (0-1)")
     
     # 地址信息
-    origin: Optional[str] = Field(default=None, description="出发地")
-    destination: Optional[str] = Field(default=None, description="目的地")
+    origin: str = Field(default_factory=str, description="出发地")
+    destination: str = Field(default_factory=str, description="目的地")
     
     # 时间信息
     departure_date: Optional[date] = Field(default=None, description="出发日期")
@@ -26,11 +26,11 @@ class TravelIntentReport(BaseModel):
     duration_days: Optional[int] = Field(default=None, description="行程天数")
     
     # 出行人员
-    person_count: int|None = Field(default=None, description="出行人数")
-    #travelers: List[str] = Field(default_factory=list, description="出行人信息列表")
+    person_count: Optional[int] = Field(default=None, description="出行人数")
+    #travelers: [str] = Field(default_factory=list, description="出行人信息列表")
     
     # 出行方式
-    transport_mode: Optional[str] = Field(default=None, description="交通方式: flight, train, car, bus等")
+    transport_mode: str = Field(default_factory=str, description="交通方式: flight, train, car, bus等")
     
     # 偏好和预算
     budget_per_person: Optional[float] = Field(default=None, description="人均预算")
@@ -38,10 +38,10 @@ class TravelIntentReport(BaseModel):
     # 额外需求
     hotel_needed: bool = Field(default=False, description="是否需要预订酒店")
     ticket_needed: bool = Field(default=False, description="是否需要景区门票")
-    extra_needs_and_preferences: List[str]|None = Field(default=None, description="多条额外的需求和偏好")
+    extra_needs_and_preferences: set[str]|None = Field(default_factory=set, description="多条额外的需求和偏好")
     
     # 补全标记
-    auto_filled_fields: List[str] = Field(default_factory=list, description="自动逻辑推断补全的字段列表")
+    auto_filled_fields: set[str] = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
 
 async def get_TravelIntentReport(user_query: str) -> dict[str, Any] | BaseModel:
     # 1. 构造 Prompt，注入当前日期

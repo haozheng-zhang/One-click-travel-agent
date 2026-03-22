@@ -6,7 +6,7 @@
 import logging
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, 
 
 from backend.app.core.nlu import parse_travel_intent, TravelIntent, NLUResult
 from backend.app.config import settings
@@ -30,9 +30,9 @@ class PlanningResponse(BaseModel):
     success: bool
     message: str
     intent: Optional[dict] = None  # TravelIntent 的字典形式
-    auto_filled_fields: List[str] = Field(default_factory=list)
-    suggestions: List[str] = Field(default_factory=list)
-    next_step: List[str]  # 下一步操作
+    auto_filled_fields: [str] = Field(default_factory=list)
+    suggestions: [str] = Field(default_factory=list)
+    next_step: [str]  # 下一步操作
 
 
 # ==================== 路由端点 ====================

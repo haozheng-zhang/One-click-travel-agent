@@ -11,7 +11,7 @@
 
 import logging
 import json
-from typing import Optional, Dict, Any, List
+from typing import Optional, dict, Any, List
 from datetime import datetime, timedelta,date,time
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
@@ -43,14 +43,14 @@ class TravelIntent(BaseModel):
     
     # 出行人员
     person_count: int = Field(default=1, description="出行人数")
-    travelers: List[str] = Field(default_factory=list, description="出行人信息列表")
+    travelers: [str] = Field(default_factory=list, description="出行人信息列表")
     
     # 出行方式
     transport_mode: Optional[str] = Field(None, description="交通方式: flight, train, car, bus等")
     
     # 偏好和预算
     budget_per_person: Optional[float] = Field(None, description="人均预算")
-    preferences: Dict[str, Any] = Field(default_factory=dict, description="其他偏好设置")
+    preferences: dict[str, Any] = Field(default_factory=dict, description="其他偏好设置")
     
     # 额外需求
     hotel_needed: bool = Field(default=False, description="是否需要预订酒店")
@@ -60,7 +60,7 @@ class TravelIntent(BaseModel):
     raw_input: str = Field(..., description="用户原始输入")
     
     # 补全标记
-    auto_filled_fields: List[str] = Field(default_factory=list, description="自动补全的字段列表")
+    auto_filled_fields: [str] = Field(default_factory=list, description="自动补全的字段列表")
 
 
 class NLUResult(BaseModel):
@@ -68,9 +68,9 @@ class NLUResult(BaseModel):
     success: bool
     travel_intent: Optional[TravelIntent] = None
     error_message: Optional[str] = None
-    suggestions: List[str] = Field(default_factory=list, description="后续建议")
-    next_step: List[str] = Field(default_factory=list, description="下一步操作")
-    missing_fields: List[str] = Field(default_factory=list, description="缺失的关键字段")
+    suggestions: [str] = Field(default_factory=list, description="后续建议")
+    next_step: [str] = Field(default_factory=list, description="下一步操作")
+    missing_fields: [str] = Field(default_factory=list, description="缺失的关键字段")
 # ==================== NLU 处理器 ====================
 
 class TravelNLUProcessor:
@@ -196,7 +196,7 @@ class TravelNLUProcessor:
             intent.duration_days = (ret_date - dep_date).days + 1
             intent.auto_filled_fields.append("duration_days")
     
-    def _generate_suggestions(self, intent: TravelIntent) -> List[str]:
+    def _generate_suggestions(self, intent: TravelIntent) -> [str]:
         """根据提取的意图生成后续建议"""
         suggestions = []
         
@@ -217,7 +217,7 @@ class TravelNLUProcessor:
             suggestions.append("💡 未指定预算，将使用通用推荐方案")
         
         return suggestions
-    def _generate_nextstep(self, intent: TravelIntent)->List[str]:
+    def _generate_nextstep(self, intent: TravelIntent)->[str]:
         """根据提取的意图生成下一步的动作"""
         nextsteps = []
         if not intent.departure_date:

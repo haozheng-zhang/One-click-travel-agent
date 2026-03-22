@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Any, List, Literal, Optional
 from datetime import date, timedelta
 from langchain.tools import tool
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 
 from backend.app.core.llm import get_llm
 
@@ -47,9 +47,11 @@ class WeatherDetail(BaseModel):
 
 class WeatherReport(BaseModel):
     """最终交给用户的连续多天天气的结构化报告"""
+    status: bool =Field(default=False,description="是否查询成功")
     days:int = Field(default=0,description="总天数")
-    repos: Optional[List[WeatherDetail]] = None
-
+    repos: list[WeatherDetail] = Field(default_factory=list,description="(连续多天)天气的结构化报告")
+    message:str= Field(default_factory=str,description="若查询失败则说明失败的原因，若成功则总结这份报告并给出出行建议")
+    source:str= Field(default_factory=str,description="天气信息来源，若没有查询到天气则置为空字符串")
 model=get_llm()
 weather_agent = create_agent(
     model,
@@ -67,47 +69,28 @@ weather_agent = create_agent(
     )
 )
 
-async def get_weather_service(user_query : str) -> dict[str, Any]:
-        agent_step = await weather_agent.ainvoke({
-            "messages": [{"role": "user", "content": user_query}]
-        })
-        # 提取 agent 最终输出内容
-        #final_content = agent_step["messages"][-1].content  # str
-        messages = agent_step["messages"]
-        tool_outputs = []
-        has_tool_call = False
-
-        for m in messages:
-            if isinstance(m, ToolMessage):
-                has_tool_call = True
-                content = m.content
-                content_str = content if isinstance(content, str) else str(content)
-                tool_outputs.append(content_str)
-
-        # 3. 分支逻辑
-        # 情况 A：Agent 调用了工具，说明校验通过，进入结构化解析阶段
-        final_response = messages[-1].content
-        if has_tool_call:
-            raw_data = "\n".join(tool_outputs)
-            # 调用 Parser 转化为 Pydantic 对象
-            report = await model.with_structured_output(WeatherReport).ainvoke(
-                f"根据以下观测事实生成天气报告，若有多天请全部列出：\n{raw_data}"
-            )
-            return {
-                "status": "success",
-                "data": report,
-                "message": final_response,
-                "source": "satellite_data"
-            }
-
-        # 情况 B：Agent 没调工具，说明它在进行“信息校验”或“火星拦截”
-        else:
-            # 拿最后一条 AIMessage 的内容，这通常是它的解释
-            
-            return {
-                "status": "fail",
-                "data": None,
-                "message": final_response,
-                "source": "agent_validation"
-            }
+async def get_weather_service(user_query: str) -> WeatherReport:
+    agent_step = await weather_agent.ainvoke({
+        "messages": [HumanMessage(content=user_query)]
+    })
+    messages = agent_step.get("messages", [])
+    if not messages:
+        raise ValueError("Weather agent returned no messages.")
+        
+    raw_data = messages[-1].content
+    
+    # 3. 结构化解析
+    # 这里建议添加一些 prompt 引导，防止解析失败
+    structured_llm = model.with_structured_output(WeatherReport)
+    report = await structured_llm.ainvoke(
+        f"请将以下天气描述转化为结构化报告。如果包含多天，请完整列出：\n{raw_data}"
+    )
+    
+    # 4. 修正断言与防御性处理
+    if report is None:
+        print("⚠️ 警告：LLM 无法解析天气数据，返回空报告")
+        return WeatherReport(message="LLM 无法解析天气数据，返回空报告")
+    
+    assert isinstance(report, WeatherReport), f"预期 WeatherReport, 实际得到 {type(report)}"
+    return report
 
