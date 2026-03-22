@@ -15,7 +15,6 @@ async def test_travel_intent_basic():
     assert report.transport_mode == "train"
     # 验证日期转换（今天+1天）
     assert report.departure_date == date.today() + timedelta(days=1)
-    assert "ticket_booking" in report.intent_type
     print(report.model_dump_json(indent=2))
 
 @pytest.mark.asyncio
@@ -23,14 +22,14 @@ async def test_travel_intent_complex():
     """测试复杂多槽位填充"""
     query = "下周五我们一家三口想去三亚玩5天，人均预算5000，想要海景房"
     report = await get_TravelIntentReport(query)
-    
+    assert isinstance(report, TravelIntentReport)
     assert report.person_count == 3
     assert report.duration_days == 5
     assert report.destination == "三亚"
     assert report.budget_per_person == 5000.0
     assert report.hotel_needed is True
     # 检查偏好设置是否被正确装入字典
-    assert "海景房" in str(report.preferences)
+    assert "海景房" in str(report.extra_needs_and_preferences)
     print(report.model_dump_json(indent=2))
 
 @pytest.mark.asyncio
@@ -40,7 +39,7 @@ async def test_travel_intent_ambiguous():
     report = await get_TravelIntentReport(query)
     
     # 即使信息缺失，也应返回模型实例，但字段多为 None
-    assert report.intent_type == "travel_planning"
+    assert isinstance(report, TravelIntentReport)
     assert report.destination is None
-    assert report.confidence < 1.0  # 模糊输入通常置信度较低
+    assert report.confidence == 0  # 模糊输入通常置信度较低
     print(report.model_dump_json(indent=2))

@@ -6,18 +6,43 @@ from backend.app.utils.travel_intent_parser import TravelIntentReport, get_Trave
 from backend.app.utils.weather_forcaster import WeatherReport, get_weather_service
 from langchain_core.messages import SystemMessage, HumanMessage
 
+def merge_travel_intent(old: Optional[TravelIntentReport], new: TravelIntentReport) -> TravelIntentReport:
+    """增量合并意图报告：保留旧信息，覆盖/更新新发现的信息"""
+    if not old: return new
+    
+    # 将旧数据转为字典
+    updated_data = old.model_dump()
+    # 提取新数据中非空的字段（LLM 本次发现的补全）
+    new_data = new.model_dump(exclude_unset=True, exclude_none=True)
+    for key, value in new_data.items():
+        if key == "extra_needed_and_preferences" and isinstance(value, List):
+            # 列表使用set去重合并
+            old_list = updated_data.get(key) or []
+            updated_data[key] = list(set(old_list + value))
+        elif isinstance(value, dict):
+            # 字典去重合并
+            old_val = updated_data.get(key) or {}
+            old_val.update(value)
+            updated_data[key] = old_val
+        else:
+            # 普通字段直接覆盖
+            updated_data[key] = value
+            
+    return TravelIntentReport(**updated_data)
+
+
 class State(TypedDict):
     messages: Annotated[list, add_messages]
     travel_intent: Annotated[Optional[TravelIntentReport], merge_travel_intent]
     weather:Optional[WeatherReport]
-    next_action:Dict[str,str]
+    next_action:Dict[str,str|None]
 
 class MessageClassifier(BaseModel):
     """分析用户意图，决定更新什么业务模块"""
     next_action: Dict[Literal["travel_intent", "weather", "general"],str] = Field(
         ...,
         description="key: 智能体将作出的下一步（一个或多个）行为，包括：'travel_intent' (更新出行规划), 'weather' (更新天气查询), 'general' (闲聊或无法识别的话题)" \
-        "value: 提供给子智能体的查询或信息语句，如“出发日期变更为下周五”“查询明天上海的天气”"
+        "value: 提供给子智能体的查询或信息语句（可以为None），如“出发日期变更为下周五”“查询明天上海的天气”"
     )
     reasoning: str = Field(description="简短的分类理由")
 
@@ -35,41 +60,35 @@ def classify_message(state: State):
         system_prompt,
         HumanMessage(content=last_message.content)
     ])
-    return {"message_type": result.next_action}
+    return {"next_action": result.next_action} # type: ignore
 
-def router(state: State) -> Union[str, List[str]]:
+
+
+def router(state: State) -> List[str]:
     """
-    根据 state 中的 message_type 决定下一个节点
+    根据 next_action 字典中的所有 Key，决定去往哪些节点。
+    如果返回多个字符串，LangGraph 会并行执行。
     """
-    target = state.get("message_type", "general")
-
-    if isinstance(target, list):
-        destinations = [t for t in target if t in ["travel_intent", "weather", "general"]]
-        return destinations if destinations else "general"
-
-    # 3. 逻辑 B：处理单意图情况
-    if target == "travel_intent":
-        return "travel_intent"   # 这里的字符串要对应下面 add_node 时的名字
+    actions = state.get("next_action", {})
+    if not actions or "general" in actions:
+        return [END] # 或去往 chat 节点
     
-    if target == "weather":
-        return "weather"
-    
-    return "general"
+    # 返回所有存在的业务 Key，如 ["travel_intent", "weather"]
+    return list(actions.keys())
 
 
 async def travel_intent_node(state: State):
     """旅游意图处理节点"""
     user_query = state["next_action"]["travel_intent"]
+    assert user_query is not None
     report = await get_TravelIntentReport(user_query)
     return {"travel_intent": report}
 
 async def weather_node(state: State):
     """天气处理节点"""
     user_query = state["next_action"]["weather"]
-    
-    # 调用你写好的天气服务
+    assert user_query is not None
     report = await get_weather_service(user_query)
-    
     return {"weather": report}
 
 graph_builder = StateGraph(State)
@@ -84,11 +103,11 @@ graph_builder.add_edge("classifier", "router")
 
 graph_builder.add_conditional_edges(
     "classifier",
-    lambda state: state["next_action"],
+    router,
     {
         "travel_intent": "travel_intent",
         "weather": "weather",
-        "general": END # 如果是闲聊，直接结束或去 chat 节点
+        "END": END
     }
 )
 
