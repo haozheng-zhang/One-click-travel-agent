@@ -121,17 +121,17 @@ async def test_LLM_connection():
     用于验证 LLM API Key 和网络连接是否正常
     """
     try:
-        from app.core.llm import get_agent
+        from app.core.llm import get_llm
         
         logger.info("测试 LLM 连接...")
         
         # 获取 LLM 实例（会自动初始化）
-        agent = get_agent()
+        llm = get_llm()
         
         # 发送测试请求
         test_input = "你好，请简单确认你的名字和能力。"
-        assert agent is not None, "agent must be initialized"
-        response = await agent.ainvoke(test_input)
+        assert llm is not None, "agent must be initialized"
+        response = await llm.ainvoke(test_input)
         
         logger.info("✓ LLM 连接成功")
         

@@ -63,48 +63,39 @@ class LLMManager:
 
 
     @classmethod
-    def get_llm(cls) -> BaseChatModel:
+    def get_llm(cls, temperature: float|None = None, **kwargs) -> BaseChatModel:
         """
         获取或创建 LLM 实例
         """
-        if cls._llm_instance is None:
-            if not settings.LLM_API_KEY:
-                raise ValueError(
-                    "LLM API Key 未配置。请在 .env 文件中设置 LLM_API_KEY"
-                )
+        is_custom = temperature is not None or len(kwargs) > 0
+        if not settings.LLM_API_KEY:
+            raise ValueError(
+                "LLM API Key 未配置。请在 .env 文件中设置 LLM_API_KEY"
+            )
+        if cls._llm_instance and not is_custom:
+            return cls._llm_instance
             
-            logger.info(f"正在初始化 LLM (模型: {settings.LLM_MODEL_NAME})")
+        logger.info(f"正在初始化 LLM (模型: {settings.LLM_MODEL_NAME})")
             
-            try:
-                # 使用 LangChain 0.2.0+ 的 init_chat_model
-                cls._llm_instance = init_chat_model(
-                    model=settings.LLM_MODEL_NAME,
-                    api_key=settings.LLM_API_KEY,
-                    base_url=settings.LLM_BASE_URL,
-                    temperature=0.7,      # 平衡创意和准确性
-                    max_tokens=2000,
-                    request_timeout=60
-                )
-                
-                logger.info("✓ LLM 初始化成功")
-                
-            except Exception as e:
-                logger.error(f"LLM 初始化失败: {str(e)}")
-                raise ValueError(f"LLM 初始化失败: {str(e)}")
+        try:
+            # 使用 LangChain 0.2.0+ 的 init_chat_model
+            cls._llm_instance = init_chat_model(
+                model=settings.LLM_MODEL_NAME,
+                api_key=settings.LLM_API_KEY,
+                base_url=settings.LLM_BASE_URL,
+                temperature=temperature if temperature is not None else getattr(settings, 'LLM_TEMPERATURE', 0.7),
+                max_tokens=2000,
+                request_timeout=60
+            )
+            
+            logger.info("✓ LLM 初始化成功")
+            
+        except Exception as e:
+            logger.error(f"LLM 初始化失败: {str(e)}")
+            raise ValueError(f"LLM 初始化失败: {str(e)}")
         
         
         return cls._llm_instance
-    # @classmethod
-    # def get_agent(cls) -> Any:
-    #     if cls._agent_instance is not None:
-    #         return cls._agent_instance
-    #     model=cls.get_llm()
-    #     assert model is not None, "Model must be initialized before creating agent"
-    #     cls._agent_instance = create_agent(
-    #         model=model,
-    #         system_prompt=cls._setup_prompt_template(),
-    #     )
-    #     return cls._agent_instance
 
     @classmethod
     def reset_instance(cls):
@@ -117,6 +108,3 @@ def get_llm() -> BaseChatModel:
     """方便函数 - 获取 agent 实例"""
     return LLMManager.get_llm()
 
-# def get_agent() -> Any:
-#     """方便函数 - 获取 agent 实例"""
-#     return LLMManager.get_agent()

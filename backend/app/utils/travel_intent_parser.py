@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional,List,Dict,Any
 from datetime import date,time
 from backend.app.core.llm import get_llm
-from langchain.agents.structured_output import ProviderStrategy
+from langchain_core.prompts import ChatPromptTemplate
 
 
 
@@ -46,15 +46,21 @@ class TravelIntentReport(BaseModel):
     # 补全标记
     auto_filled_fields: List[str] = Field(default_factory=list, description="自动补全的字段列表")
 
-
-travel_intent_parser = create_event(
-    model=get_llm(),
-    # 核心：定义最终输出必须符合 WeatherReport 格式
-    response_format=ProviderStrategy(TravelIntentReport), 
-    system_prompt=(
-        f"你是一个专业的天气助手。当前日期是 {date.today()}。" # 注入当前时间
-        "1. 如果用户询问未来天气，请确保 location、date_being_searched、include_forecast 等参数正确。"
-        "2. 调用 get_weather 获取数据。"
-        "3. 最终生成 WeatherReport。"
-    )
-)
+async def get_TravelIntentReport(user_query: str) -> dict[str, Any] | BaseModel:
+    # 1. 构造 Prompt，注入当前日期
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", (
+            "你是一个专业的旅游意图分析专家。"
+            f"今天是 {date.today()}。请从用户输入中提取出行意图。"
+            "如果用户没提到某项信息，请保持该字段为 None。"
+            "如果你对某个字段是猜测的，请将其记录在 auto_filled_fields 中。"
+        )),
+        ("human", "{input}")
+    ])
+    
+    # 2. 绑定结构化输出
+    chain = prompt | get_llm().with_structured_output(TravelIntentReport)
+    
+    # 3. 执行
+    report = await chain.ainvoke({"input": user_query})
+    return report
