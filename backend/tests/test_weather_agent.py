@@ -1,6 +1,8 @@
+#测试此agent的方法： pytest test_weather_agent.py -s
+
 import pytest
 from datetime import date
-from backend.app.utils.weather_agent import weather_agent, WeatherReport  # 替换为你的实际路径
+from backend.app.utils.weather_forcaster import weather_agent, WeatherReport  # 替换为你的实际路径
 
 @pytest.mark.asyncio
 async def test_weather_agent_basic_flow():
@@ -13,7 +15,10 @@ async def test_weather_agent_basic_flow():
     result = await weather_agent.ainvoke({
             "messages": [{"role": "user", "content": test_input}]
     })
-    print(result)
+    print(result.keys())
+    for i, msg in enumerate(result["messages"]):
+        print(f"\n--- Message {i+1} ({msg.__class__.__name__}) ---")
+        msg.pretty_print()
     # 3. 断言校验
     
     ai_msg = result["messages"][-2]
@@ -45,7 +50,10 @@ async def test_weather_agent_invalid_location():
     result = await weather_agent.ainvoke({
             "messages": [{"role": "user", "content": test_input}]
     })
-    print(result)
+    print(result.keys())
+    for i, msg in enumerate(result["messages"]):
+        print(f"\n--- Message {i+1} ({msg.__class__.__name__}) ---")
+        msg.pretty_print()
     # 即使地点奇怪，Agent 也应该返回结构化数据，而不是崩溃
     ai_msg = result["messages"][-2]
     assert hasattr(ai_msg, "tool_calls") and ai_msg.tool_calls
@@ -53,3 +61,4 @@ async def test_weather_agent_invalid_location():
     tool_args = ai_msg.tool_calls[0]["args"]
     report = WeatherReport.model_validate(tool_args)
     assert isinstance(report, WeatherReport)
+    print(f"\n✓ 火星测试通过！")
