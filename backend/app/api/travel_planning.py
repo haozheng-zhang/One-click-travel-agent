@@ -6,7 +6,7 @@
 import logging
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
-from typing import Optional, 
+from typing import Optional
 
 from backend.app.core.nlu import parse_travel_intent, TravelIntent, NLUResult
 from backend.app.config import settings
