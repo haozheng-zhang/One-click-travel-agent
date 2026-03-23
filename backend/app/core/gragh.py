@@ -2,6 +2,7 @@ from typing import Annotated, Literal, Optional, TypedDict
 from langgraph.graph import END, START, StateGraph, add_messages
 from pydantic import BaseModel, Field
 from backend.app.core import get_llm
+from datetime import date
 from backend.app.utils.travel_intent_parser import TravelIntentReport, get_TravelIntentReport
 from backend.app.utils.weather_forecaster import WeatherReport, get_weather_service
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -41,7 +42,7 @@ class MessageClassifier(BaseModel):
     next_action: dict[Literal["travel_intent", "weather", "general"],str] = Field(
         ...,
         description="key: 智能体将作出的下一步（一个或多个）行为，包括：'travel_intent' (更新出行规划), 'weather' (更新天气查询), 'general' (闲聊或无法识别的话题)" \
-        "value: 提供给子智能体的信息或查询语句（可以为None），如“出发日期变更为下周五”“查询某时间（如明天、下周、3月10号）某地点的天气”"
+        "value: 提供给子智能体的信息或查询语句（可以为None），如“出发日期变更为2026-3-10（星期六）”“广东2026-3-10（星期六）到2026-3-11（星期日）的天气预报”"
     )
     reasoning: str = Field(description="简短的分类理由")
 
@@ -50,11 +51,25 @@ def classify_message(state: State):
     last_message = state["messages"][-1]
     classifier_llm = get_llm().with_structured_output(MessageClassifier)
 
-    system_prompt = SystemMessage(content="""你是一个意图分拣专家。请分析用户的输入并分类：
+    system_prompt = SystemMessage(content="""你是一个意图分拣专家。请分析用户的输入并从下表中选出意图：
         - 'travel_intent': 从用户的信息推断出应当更新出行规划
         - 'weather': 从用户的信息推断出应当更新天气查询
         - 'general': 闲聊或无法识别的话题。
-        """)
+        """
+        f"""
+        你是一个拥有‘时间感知能力’的意图分拣专家。
+        今天的日期是：{date.today()} (星期{date.today().strftime('%A')})。
+        
+        你的任务：
+        1. 分析用户输入的意图（travel_intent, weather, general）。
+        2. 时间归一化：如果用户提到“明天”、“下周”、“后天”等相对时间，请根据今天的日期将其转换为 YYYY-MM-DD(星期几) 格式。
+        3. 在 next_action 的 value 中，输出包含绝对日期的指令。
+        
+        示例：
+        - 输入：“明天上海天气怎么样？”
+        - 输出：next_action: {{"weather": " 上海（你计算出的绝对日期）的天气预报"}}
+        """
+                                  )
     result = classifier_llm.invoke([
         system_prompt,
         HumanMessage(content=last_message.content)

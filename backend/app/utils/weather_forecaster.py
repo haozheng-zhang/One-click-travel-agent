@@ -1,36 +1,38 @@
 from langchain.agents import create_agent
+from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import Any,Literal
 from datetime import date, timedelta
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage, ToolMessage
+from tavily import TavilyClient
 from backend.app.core import get_llm
 
-class WeatherInput(BaseModel):
-    """Input for weather queries."""
-    location: str = Field(description="City name or coordinates")
-    beginning_date:date = Field(description="the beginning date being searched")
-    units: Literal["celsius", "fahrenheit"] = Field(
-        default="celsius",
-        description="Temperature unit preference"
-    )
-    total_days: int = Field(
-        default=0,
-        description="total number of days whose weathers should be reported"
-    )
+# class WeatherInput(BaseModel):
+#     """Input for weather queries."""
+#     location: str = Field(description="City name or coordinates")
+#     beginning_date:date = Field(description="the beginning date being searched")
+#     units: Literal["celsius", "fahrenheit"] = Field(
+#         default="celsius",
+#         description="Temperature unit preference"
+#     )
+#     total_days: int = Field(
+#         default=0,
+#         description="total number of days whose weathers should be reported"
+#     )
 
-@tool(args_schema=WeatherInput)
-def get_weather(location: str, beginning_date:date,units: str = "celsius", include_forecast: int = 0) -> str:
-    """Get weather of several days."""
-    temp = 22 if units == "celsius" else 72
-    lines = [f"{beginning_date}: {location}, {temp} degrees {units}, Sunny"]
+# @tool(args_schema=WeatherInput)
+# def get_weather(location: str, beginning_date:date,units: str = "celsius", include_forecast: int = 0) -> str:
+#     """Get weather of several days."""
+#     temp = 22 if units == "celsius" else 72
+#     lines = [f"{beginning_date}: {location}, {temp} degrees {units}, Sunny"]
     
-    for i in range(1, include_forecast + 1):
-        future_date = beginning_date + timedelta(days=i)
-        # 模拟明天的气温稍微变一下，让 AI 好识别
-        lines.append(f"{future_date}: {location}, {temp + 1} degrees {units}, Cloudy")
+#     for i in range(1, include_forecast + 1):
+#         future_date = beginning_date + timedelta(days=i)
+#         # 模拟明天的气温稍微变一下，让 AI 好识别
+#         lines.append(f"{future_date}: {location}, {temp + 1} degrees {units}, Cloudy")
     
-    return "\n".join(lines)
+#     return "\n".join(lines)
 
 class WeatherDetail(BaseModel):
     """某一天的天气详情数据模型"""
@@ -53,44 +55,74 @@ class WeatherReport(BaseModel):
     message:str= Field(default_factory=str,description="若查询失败则说明失败的原因，若成功则总结这份报告并给出出行建议")
     source:str= Field(default_factory=str,description="天气信息来源，若没有查询到天气则置为空字符串")
 model=get_llm()
-weather_agent = create_agent(
-    model,
-    tools=[get_weather],
-    system_prompt=(
-        f"你是一个拥有‘地球卫星权限’的严谨天气数据分析员。当前日期是 {date.today()}。\n\n"
-        "核心任务：\n"
-        "1. **信息校验**：在调用工具前，必须校验地点和时间。\n"
-        "   - 地点限制：仅限地球。如果用户提到火星、月球等外星地点，请幽默地拒绝。\n"
-        "   - 时间限制：如果查询日期超过未来15天，请委婉拒绝并告知用户预测模型在远期可能失效。\n"
-        "2. **工具调用**：校验通过后，计算 beginning_date 和 include_forecast 并调用 get_weather。\n"
-        "3. **回复规范**：\n"
-        "   - 若调用了工具：请回复‘已获取到原始数据：[内容]’。\n"
-        "   - 若未调用工具（校验未通过）：请直接以交互性的口吻回复用户，解释原因。"
-    )
-)
+# weather_agent = create_agent(
+#     model,
+#     tools=[get_weather],
+#     system_prompt=(
+#         f"你是一个拥有‘地球卫星权限’的严谨天气数据分析员。当前日期是 {date.today()}。\n\n"
+#         "核心任务：\n"
+#         "1. **信息校验**：在调用工具前，必须校验地点和时间。\n"
+#         "   - 地点限制：仅限地球。如果用户提到火星、月球等外星地点，请幽默地拒绝。\n"
+#         "   - 时间限制：如果查询日期超过未来15天，请委婉拒绝并告知用户预测模型在远期可能失效。\n"
+#         "2. **工具调用**：校验通过后，计算 beginning_date 和 include_forecast 并调用 get_weather。\n"
+#         "3. **回复规范**：\n"
+#         "   - 若调用了工具：请回复‘已获取到原始数据：[内容]’。\n"
+#         "   - 若未调用工具（校验未通过）：请直接以交互性的口吻回复用户，解释原因。"
+#     )
+# )
 
-async def get_weather_service(user_query: str) -> WeatherReport:
-    agent_step = await weather_agent.ainvoke({
-        "messages": [HumanMessage(content=user_query)]
-    })
-    messages = agent_step.get("messages", [])
-    if not messages:
-        raise ValueError("Weather agent returned no messages.")
+# async def get_weather_service(user_query: str) -> WeatherReport:
+#     agent_step = await weather_agent.ainvoke({
+#         "messages": [HumanMessage(content=user_query)]
+#     })
+#     messages = agent_step.get("messages", [])
+#     if not messages:
+#         raise ValueError("Weather agent returned no messages.")
         
-    raw_data = messages[-1].content
+#     raw_data = messages[-1].content
     
-    # 3. 结构化解析
-    # 这里建议添加一些 prompt 引导，防止解析失败
-    structured_llm = model.with_structured_output(WeatherReport)
-    report = await structured_llm.ainvoke(
-        f"请将以下天气描述转化为结构化报告。如果包含多天，请完整列出：\n{raw_data}"
-    )
+#     # 3. 结构化解析
+#     # 这里建议添加一些 prompt 引导，防止解析失败
+#     structured_llm = model.with_structured_output(WeatherReport)
+#     report = await structured_llm.ainvoke(
+#         f"请将以下天气描述转化为结构化报告。如果包含多天，请完整列出：\n{raw_data}"
+#     )
     
-    # 4. 修正断言与防御性处理
-    if report is None:
-        print("⚠️ 警告：LLM 无法解析天气数据，返回空报告")
-        return WeatherReport(message="LLM 无法解析天气数据，返回空报告")
+#     # 4. 修正断言与防御性处理
+#     if report is None:
+#         print("⚠️ 警告：LLM 无法解析天气数据，返回空报告")
+#         return WeatherReport(message="LLM 无法解析天气数据，返回空报告")
     
-    assert isinstance(report, WeatherReport), f"预期 WeatherReport, 实际得到 {type(report)}"
-    return report
+#     assert isinstance(report, WeatherReport), f"预期 WeatherReport, 实际得到 {type(report)}"
+#     return report
 
+
+
+async def get_weather_service(agent_query: str) -> WeatherReport:
+
+    search_tool = TavilySearchResults(k=3) 
+    search_docs = await search_tool.ainvoke({"query": f"{agent_query}"})
+    
+    search_context = "\n".join([d["content"] for d in search_docs])
+    parser_llm = model.with_structured_output(WeatherReport)
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", f"你是一个专业的天气数据分析师。"
+                   "请根据提供的搜索上下文，提炼出结构化的天气报告。"
+                   "如果搜索结果不包含具体温度或与原始问题无关，请标记 status 为 False。"),
+        ("user", "搜索上下文：\n{context}\n\n母智能体原始问题：{query}")
+    ])
+    
+    chain = prompt | parser_llm
+    
+    report = await chain.ainvoke({
+        "context": search_context,
+        "query": agent_query
+    })
+    if isinstance(report,WeatherReport):return report
+    return WeatherReport(message="未能提取到有效的天气信息", status=False)
+
+
+tavily_client = TavilyClient(api_key="tvly-YOUR_API_KEY")
+response = tavily_client.search("在python中如何使用tavily")
+print(response)

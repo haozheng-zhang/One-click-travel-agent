@@ -1,29 +1,46 @@
-#测试此agent的方法： pytest test_weather_agent.py -s
 import pytest
-from datetime import date
-from backend.app.utils.weather_forecaster import get_weather_service, weather_agent, WeatherReport  # 替换为你的实际路径
+import os
+from backend.app.utils.weather_forecaster import get_weather_service, WeatherReport
+
 
 @pytest.mark.asyncio
-async def test_weather_agent_basic_flow():
-    """测试基础的天气查询流程"""
-    # 1. 准备输入
-    test_input = "帮我查查上海今明两天的天气，用摄氏度。"
+async def test_get_weather_service_live():
+    """
+    真实调用 Tavily 和 LLM 的端到端测试。
+    注意：这会消耗真实的 API Token。
+    """
+    # 1. 准备一个具体的查询词（包含相对时间，测试 Classifier 的前置效果）
+    # 假设 Classifier 已经把“明天”转成了具体的日期描述
+    test_query = "2026-03-24 上海的天气预报"
     
-    # 2. 执行 Agent
-    # 注意：在测试环境中，你可能需要手动注入“今天”的日期到 Prompt
-    result = await get_weather_service(test_input)
-    print(result.model_dump_json(indent=2))
-    # 3. 断言校验
-    assert isinstance(result, WeatherReport)   
-    print(f"\n✓ 上海天气测试通过！")
+    print(f"\n[🚀 开始实战测试] 查询词: {test_query}")
+
+    # 2. 执行真实调用
+    try:
+        report = await get_weather_service(test_query)
+        
+        # 3. 打印实时返回结果，方便观察 AI 的提取质量
+        print(report.model_dump_json(indent=2))
+
+        # 4. 核心断言
+        assert isinstance(report, WeatherReport), "返回类型错误"
+        assert report.status is True, f"接口返回失败: {report.message}"
+        assert len(report.repos) >= 1, "未提取到任何天气详情"
+        assert "上海" in report.repos[0].location, f"地点解析错误: {report.repos[0].location}"
+        
+    except Exception as e:
+        pytest.fail(f"实战测试中发生未预期错误: {e}")
 
 @pytest.mark.asyncio
-async def test_weather_agent_invalid_location():
-    """测试面对模糊或无效输入时的表现"""
-    test_input = "查查火星今天的天气"
+async def test_get_weather_service_invalid_location_live():
+    """
+    测试极端情况：搜索一个不存在的地方
+    """
+    report = await get_weather_service("克卜勒-452b 行星的天气")
     
-    result = await get_weather_service(test_input)
-    print(result.model_dump_json(indent=2))
-    # 即使地点奇怪，Agent 也应该返回结构化数据，而不是崩溃
-    assert isinstance(result, WeatherReport)
-    print(f"\n✓ 火星天气测试通过！")
+    print(f"\n[👽 极端情况测试] 消息: {report.message}")
+    # 即使失败，也应该返回一个合法的 WeatherReport 对象，而不是崩溃
+    assert isinstance(report, WeatherReport)
+    print(report.model_dump_json(indent=2))
+    # 理想情况下，AI 应该能识别出搜不到，并设置 status 为 False
+    assert report.status is False
