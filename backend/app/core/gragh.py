@@ -1,7 +1,7 @@
 from typing import Annotated, Literal, Optional, TypedDict
 from langgraph.graph import END, START, StateGraph, add_messages
 from pydantic import BaseModel, Field
-from backend.app.core.llm import get_llm
+from backend.app.core import get_llm
 from backend.app.utils.travel_intent_parser import TravelIntentReport, get_TravelIntentReport
 from backend.app.utils.weather_forecaster import WeatherReport, get_weather_service
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -41,7 +41,7 @@ class MessageClassifier(BaseModel):
     next_action: dict[Literal["travel_intent", "weather", "general"],str] = Field(
         ...,
         description="key: 智能体将作出的下一步（一个或多个）行为，包括：'travel_intent' (更新出行规划), 'weather' (更新天气查询), 'general' (闲聊或无法识别的话题)" \
-        "value: 提供给子智能体的查询或信息语句（可以为None），如“出发日期变更为下周五”“查询明天上海的天气”"
+        "value: 提供给子智能体的信息或查询语句（可以为None），如“出发日期变更为下周五”“查询某时间（如明天、下周、3月10号）某地点的天气”"
     )
     reasoning: str = Field(description="简短的分类理由")
 

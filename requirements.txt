@@ -7,3 +7,4 @@ pydantic_settings==2.13.1
 pytest==9.0.2
 python-dotenv==1.0.0
 uvicorn==0.24.0
+langchain-deepseek==1.0.1

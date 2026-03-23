@@ -53,12 +53,6 @@ class Settings(BaseSettings):
     
     # 日志配置
     LOG_LEVEL: str = "INFO"
-    
-    # # 业务规则配置
-    # DEFAULT_PERSON_COUNT: int = 2  # 默认出行人数
-    # DEFAULT_DEPARTURE_TIME: str = "09:00"  # 默认出发时间
-    # DEFAULT_RETURN_TIME: str = "17:00"  # 默认返回时间
-    # MAX_ITINERARY_DAYS: int = 30  # 最长行程天数
 
 
 # 创建全局设置实例

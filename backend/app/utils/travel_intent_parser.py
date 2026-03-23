@@ -2,7 +2,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional,List,Any
 from datetime import date,time
-from backend.app.core.llm import get_llm
+from backend.app.core import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 
 

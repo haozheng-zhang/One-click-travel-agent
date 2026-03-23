@@ -55,7 +55,7 @@ def check_python_version():
     print(f"    错误: Python {sys.version_info.major}.{sys.version_info.minor} 过低，需要 3.10+")
     return False
 
-
+# 可以重构为从setting中获取环境变量
 def check_env_file():
     """检查 .env 文件"""
     env_path = Path(".env")

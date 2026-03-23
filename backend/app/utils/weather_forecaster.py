@@ -1,11 +1,10 @@
 from langchain.agents import create_agent
 from pydantic import BaseModel, Field
-from typing import Any, List, Literal, Optional
+from typing import Any,Literal
 from datetime import date, timedelta
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage, ToolMessage
-
-from backend.app.core.llm import get_llm
+from backend.app.core import get_llm
 
 class WeatherInput(BaseModel):
     """Input for weather queries."""
@@ -15,9 +14,9 @@ class WeatherInput(BaseModel):
         default="celsius",
         description="Temperature unit preference"
     )
-    include_forecast: int = Field(
+    total_days: int = Field(
         default=0,
-        description="number of following days of forecast after the beginning date"
+        description="total number of days whose weathers should be reported"
     )
 
 @tool(args_schema=WeatherInput)
@@ -37,7 +36,8 @@ class WeatherDetail(BaseModel):
     """某一天的天气详情数据模型"""
     location: str
     the_date:date = Field(description="the weather on which being searched")
-    temperature: float
+    max_temp: int = Field(description="the maximum temperature")
+    min_temp: int = Field(description="the minimum temperature")
     units: Literal["celsius", "fahrenheit"] = Field(
         default="celsius",
         description="Temperature unit preference"

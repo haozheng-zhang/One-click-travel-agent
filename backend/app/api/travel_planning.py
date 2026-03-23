@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from backend.app.core.nlu import parse_travel_intent, TravelIntent, NLUResult
-from backend.app.config import settings
+from backend.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +30,9 @@ class PlanningResponse(BaseModel):
     success: bool
     message: str
     intent: Optional[dict] = None  # TravelIntent 的字典形式
-    auto_filled_fields: [str] = Field(default_factory=list)
-    suggestions: [str] = Field(default_factory=list)
-    next_step: [str]  # 下一步操作
+    auto_filled_fields: set[str] = Field(default_factory=set)
+    suggestions: list[str] = Field(default_factory=list)
+    next_step: list[str]  # 下一步操作
 
 
 # ==================== 路由端点 ====================
@@ -121,7 +121,7 @@ async def test_LLM_connection():
     用于验证 LLM API Key 和网络连接是否正常
     """
     try:
-        from app.core.llm import get_llm
+        from backend.app.core import get_llm
         
         logger.info("测试 LLM 连接...")
         
