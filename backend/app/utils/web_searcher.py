@@ -13,15 +13,8 @@ class SearchInput(BaseModel):
         default="basic", 
         description="搜索深度：'basic' 速度快，'advanced' 内容更深（消耗更多额度）"
     )
-
-
-@tool("web_search", args_schema=SearchInput)
-async def web_search(query: str, search_depth: Literal['basic', 'advanced', 'fast', 'ultra-fast'] = "basic") -> str:
-    """
-    一个强大的互联网搜索引擎。
-    当你需要获取最新的新闻、实时天气、景点动态、价格信息或验证事实等信息时，请调用此工具。
-    """
-
+    
+async def _execute_web_search(query: str, search_depth:Literal['basic', 'advanced', 'fast', 'ultra-fast'] = "basic") -> str:
     api_key = settings.TAVILY_API_KEY
     if not api_key:
         return "错误：未检测到 TAVILY_API_KEY，请检查服务器配置。"
@@ -57,3 +50,12 @@ async def web_search(query: str, search_depth: Literal['basic', 'advanced', 'fas
 
     except Exception as e:
         return f"搜索过程中发生错误: {str(e)}"
+
+@tool("web_search", args_schema=SearchInput)
+async def web_search(query: str, search_depth: Literal['basic', 'advanced', 'fast', 'ultra-fast'] = "basic") -> str:
+    """
+    一个强大的互联网搜索引擎。
+    当你需要获取最新的新闻、实时天气、景点动态、价格信息或验证事实等信息时，请调用此工具。
+    """
+    return await _execute_web_search(query,search_depth)
+    

@@ -33,14 +33,6 @@ class Settings(BaseSettings):
     LLM_BASE_URL: Optional[str] = None       # 通用 API 地址（优先使用）
     LLM_MODEL_NAME: str = ""                 # 通用模型名称
     TAVILY_API_KEY: Optional[str] = None
-
-    # LLM 配置 (LLM)
-    # LLM_API_KEY: Optional[str] = None
-    # LLM_BASE_URL:str="https://api.LLM.com/v1"
-    # OPENAI_API_KEY: Optional[str] = None
-    # OPENAI_BASE_URL:str="https://us.api.openai.com/v1"
-    # ANTHROPIC_API_KEY: Optional[str] = None
-    # ANTHROPIC_BASE_URL:str="https://api.anthropic.com"
     
     # MODEL_NAME: str = "LLM-chat"  # LLM 的聊天模型
     

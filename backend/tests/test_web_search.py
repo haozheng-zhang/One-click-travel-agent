@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from backend.app.utils.web_search import web_search
+from backend.app.utils.web_searcher import web_search
 
 @pytest.mark.asyncio
 async def test_web_search_success():

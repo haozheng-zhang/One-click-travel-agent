@@ -1,12 +1,23 @@
 # from anyio import create_event
+from langchain.tools import InjectedToolCallId, tool
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
-from typing import Optional,List,Any
-from datetime import date,time
+from typing import Annotated, Optional,Any
+from collections import OrderedDict
+from datetime import date, datetime,time
 from backend.app.core import get_llm
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import ToolMessage
+from langgraph.types import Command
 
-
-
+class Destination(BaseModel):
+    """游玩某地的行程规划"""
+    location:str=Field(default_factory=str, description="目的地，如“天津”")
+    attractions:OrderedDict[str,datetime]=Field(default_factory=OrderedDict, description="按时间先后顺序记录旅游景点及到访时间")
+    stay:str=Field(default_factory=str, description="用户居住于此的方式，如“某某酒店”，没有则填写“无”")
+    hotel_needed: bool = Field(default=False, description="是否需要预订酒店")
+    ticket_needed: list[str] = Field(default_factory=list, description="需要预定景点门票的景点列表")
+    transportation:str=Field(default_factory=str,description="详细叙述在此地的交通方式规划，包括离开此地的交通方式")
 class TravelIntentReport(BaseModel):
     """出行意图结构化数据模型"""
     
@@ -16,8 +27,7 @@ class TravelIntentReport(BaseModel):
     
     # 地址信息
     origin: str = Field(default_factory=str, description="出发地")
-    destination: str = Field(default_factory=str, description="目的地")
-    
+    destinations: list[Destination]=Field(default_factory=list, description="按时间先后顺序记录旅游地点")
     # 时间信息
     departure_date: Optional[date] = Field(default=None, description="出发日期")
     departure_time: Optional[time] = Field(default=None, description="出发时间")
@@ -27,69 +37,34 @@ class TravelIntentReport(BaseModel):
     
     # 出行人员
     person_count: Optional[int] = Field(default=None, description="出行人数")
-    #travelers: [str] = Field(default_factory=list, description="出行人信息列表")
-    
     # 出行方式
-    transport_mode: str = Field(default_factory=str, description="交通方式: flight, train, car, bus等")
-    
+    transport_mode: str = Field(default_factory=str, description="离开出发地的交通方式，如“高铁”，“自驾”")
     # 偏好和预算
     budget_per_person: Optional[float] = Field(default=None, description="人均预算")
     
     # 额外需求
-    hotel_needed: bool = Field(default=False, description="是否需要预订酒店")
-    ticket_needed: bool = Field(default=False, description="是否需要景区门票")
     extra_needs_and_preferences: set[str]|None = Field(default_factory=set, description="多条额外的需求和偏好")
     
     # 补全标记
     auto_filled_fields: set[str] = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
 
+class TravelIntentInput(BaseModel):
+    query: str = Field(description="用户最近一条关于旅行意图的原始自然语言描述")
 
-class AttractionTicketBookingIntent(BaseModel):
-    """景区门票预订意图 - 结构化数据模型"""
-    
-    # 核心信息 - 用于调用景区查询和门票预订API
-    destination: str = Field(default="", description="景区/目的地名称")
-    attraction_id: Optional[str] = Field(default=None, description="景区ID（如果系统已知）")
-    
-    # 时间信息
-    visit_date: Optional[date] = Field(default=None, description="计划访问日期")
-    visit_time: Optional[time] = Field(default=None, description="计划访问时间")
-    
-    # 门票相关
-    ticket_type: Optional[str] = Field(default=None, description="门票类型: 成人, 学生, 儿童, 老人等")
-    quantity: Optional[int] = Field(default=None, description="购票数量")
-    
-    # 人员信息 - 用于门票分类
-    adult_count: int = Field(default=0, description="成人数量")
-    student_count: int = Field(default=0, description="学生数量")
-    child_count: int = Field(default=0, description="儿童（6-12岁）数量")
-    elderly_count: int = Field(default=0, description="老年人数量")
-    
-    # 预算和偏好
-    max_price_per_ticket: Optional[float] = Field(default=None, description="单张票最高接受价格")
-    has_special_needs: bool = Field(default=False, description="是否有特殊需求（无障碍等）")
-    special_needs_description: Optional[str] = Field(default=None, description="特殊需求描述")
-    
-    # 购票信息
-    prefer_combined_ticket: bool = Field(default=False, description="是否倾向于购买套票")
-    need_transportation: bool = Field(default=False, description="是否需要景区内交通服务")
-    
-    # 额外信息
-    visiting_with_group: bool = Field(default=False, description="是否是团体预订")
-    group_size: Optional[int] = Field(default=None, description="团体人数")
-    extra_preferences: Optional[str] = Field(default=None, description="其他偏好或要求")
-    
-    # 置信度和补全信息
-    confidence: float = Field(default=0.8, description="意图识别置信度 (0-1)")
-    auto_filled_fields: List[str] = Field(default_factory=list, description="自动逻辑推断补全的字段列表")
-
-
-async def get_TravelIntentReport(user_query: str) -> dict[str, Any] | BaseModel:
-    # 1. 构造 Prompt，注入当前日期
+@tool("get_TravelIntent", args_schema=TravelIntentInput)
+async def get_TravelIntentReport(
+    query: HumanMessage,
+    tool_call_id: Annotated[str, InjectedToolCallId]
+    ) -> Command:
+    """意图解析专家：将用户的自然语言行程需求转化为结构化的旅行意图报告。
+    请在收到用户输入且分析出需要更新旅行意图报告时的第一时刻单独调用此工具，因为旅行意图报告可能作为其他工具的输入。
+    """
     prompt = ChatPromptTemplate.from_messages([
         ("system", (
             "你是一个专业的旅游意图分析专家。"
-            f"今天是 {date.today()}。请从用户输入中提取出行意图，并只能返回TravelIntentReport实例。"
+            f"今天的日期是：{date.today()} (星期{date.today().strftime('%A')})。"
+            "请将用户提到的相对时间（如“明天”“下周三”）翻译成绝对时间。"
+            "然后从已翻译的用户输入中提取出行意图，填入TravelIntentReport的字段并返回。"
             "如果用户没提到某项信息，请保持该字段为 None。"
             "如果你对某个字段是猜测的，请将其记录在 auto_filled_fields 中。"
         )),
@@ -100,8 +75,21 @@ async def get_TravelIntentReport(user_query: str) -> dict[str, Any] | BaseModel:
     chain = prompt | get_llm().with_structured_output(TravelIntentReport)
     
     # 3. 执行
-    report = await chain.ainvoke({"input": user_query})
+    report = await chain.ainvoke({"input": query})
     if report is None:
-        # 返回一个带有原始输入的默认实例
-        return TravelIntentReport()
-    return report
+        report = TravelIntentReport()
+
+    # 2. 核心：返回 Command 对象
+    return Command(
+        update={
+            # 更新 State 中的 travel_intent 字段，触发你定义的 merge 逻辑
+            "travel_intent": report,
+            # 必须包含 ToolMessage，否则 Meta-Agent 会因为收不到工具结果而报错
+            "messages": [
+                ToolMessage(
+                    content="旅行意图报告已成功增量更新。", 
+                    tool_call_id=tool_call_id
+                )
+            ]
+        }
+    )
