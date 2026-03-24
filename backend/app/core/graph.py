@@ -5,11 +5,12 @@ from pydantic import BaseModel, Field
 from backend.app.core import get_llm
 from datetime import date
 from backend.app.utils.travel_intent_parser import TravelIntentReport, get_TravelIntentReport
-from backend.app.utils.weather_parser import search_weather_and_parse,WeatherReport
+from backend.app.utils.weather_parser import search_weather_and_parse, WeatherReport
 from backend.app.utils.web_searcher import web_search
+from backend.app.utils.attraction_recommendation import recommend_attractions, get_ticket_info, book_attraction_ticket
 from langgraph.graph import END, START, StateGraph, add_messages
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_core.messages import AIMessage, SystemMessage, HumanMessage,ToolMessage,AnyMessage
+from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, ToolMessage, AnyMessage
 
 def merge_travel_intent(old: Optional[TravelIntentReport], new: TravelIntentReport) -> TravelIntentReport:
     """增量合并意图报告：保留旧信息，覆盖/更新新发现的信息"""
@@ -73,7 +74,7 @@ class State(TypedDict):
 #     ])
 #     return {"next_action": result.next_action} # type: ignore
 
-tools = [get_TravelIntentReport,web_search,search_weather_and_parse]
+tools = [get_TravelIntentReport, web_search, search_weather_and_parse, recommend_attractions, get_ticket_info, book_attraction_ticket]
 
 model = get_llm().bind_tools(tools)
 

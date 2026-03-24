@@ -8,9 +8,12 @@ from backend.app.utils.attraction_recommendation import (
     _search_attraction,
     _get_optimal_tickets,
     _call_recommendation_api,
-    _call_ticket_api
+    _call_ticket_api,
+    _execute_recommend_attractions,
+    _execute_get_ticket_info,
+    _execute_book_attraction_ticket,
+    AttractionTicketBookingIntent,
 )
-from backend.app.utils.travel_intent_parser import AttractionTicketBookingIntent
 
 
 @pytest.mark.asyncio
@@ -55,12 +58,12 @@ async def test_workflow_step1_recommend_attractions_for_city():
     with patch("backend.app.utils.attraction_recommendation._call_recommendation_api") as mock_call:
         mock_call.return_value = mock_response
 
-        # 用户输入：destination="北京"（城市名称）
-        result = await recommend_attractions.ainvoke({
-            "destination": "北京",
-            "travel_days": 3,
-            "budget": "中等"
-        })
+        # 调用内部执行函数
+        result = await _execute_recommend_attractions(
+            destination="北京",
+            travel_days=3,
+            budget="中等"
+        )
         
         # 验证返回了所有景点
         assert "故宫博物院" in result
@@ -93,10 +96,10 @@ async def test_get_ticket_info_success():
     with patch("backend.app.utils.attraction_recommendation._call_ticket_api") as mock_call:
         mock_call.return_value = mock_ticket_response
 
-        result = await get_ticket_info.ainvoke({
-            "attraction_id": "forbidden_city_001",
-            "ticket_type": "all"
-        })
+        result = await _execute_get_ticket_info(
+            attraction_id="forbidden_city_001",
+            ticket_type="all"
+        )
         
         assert "成人票" in result
         assert "学生票" in result
@@ -111,10 +114,10 @@ async def test_recommend_attractions_no_results():
 
     with patch("backend.app.utils.attraction_recommendation._call_recommendation_api") as mock_call:
         mock_call.return_value = mock_response
-        result = await recommend_attractions.ainvoke({
-            "destination": "火星",
-            "travel_days": 1
-        })
+        result = await _execute_recommend_attractions(
+            destination="火星",
+            travel_days=1
+        )
         assert "未找到关于" in result or "抱歉" in result
 
 
@@ -133,7 +136,7 @@ async def test_get_ticket_info_no_availability():
 
     with patch("backend.app.utils.attraction_recommendation._call_ticket_api") as mock_call:
         mock_call.return_value = mock_response
-        result = await get_ticket_info.ainvoke({"attraction_id": "001"})
+        result = await _execute_get_ticket_info(attraction_id="001")
         assert "已售罄" in result or "暂无" in result
 
 
@@ -143,10 +146,10 @@ async def test_recommend_attractions_api_error():
     
     with patch("backend.app.utils.attraction_recommendation._call_recommendation_api") as mock_call:
         mock_call.side_effect = Exception("推荐服务暂时不可用")
-        result = await recommend_attractions.ainvoke({
-            "destination": "西安",
-            "travel_days": 1
-        })
+        result = await _execute_recommend_attractions(
+            destination="西安",
+            travel_days=1
+        )
         assert "推荐异常" in result
 
 
@@ -156,7 +159,7 @@ async def test_get_ticket_purchase_error():
     
     with patch("backend.app.utils.attraction_recommendation._call_ticket_api") as mock_call:
         mock_call.side_effect = Exception("支付服务连接失败")
-        result = await get_ticket_info.ainvoke({"attraction_id": "001"})
+        result = await _execute_get_ticket_info(attraction_id="001")
         assert "获取门票信息异常" in result
 
 
@@ -228,8 +231,13 @@ async def test_workflow_step2_book_attraction_ticket_success():
         mock_search.return_value = mock_attraction_response
         mock_tickets.return_value = mock_ticket_response
         
-        # 执行预订
-        result = await book_attraction_ticket.ainvoke(booking_intent_dict)
+        # 执行预订 - 使用内部执行函数
+        result = await _execute_book_attraction_ticket(
+            destination="故宫博物院",
+            visit_date=date(2024, 4, 1),
+            adult_count=2,
+            child_count=1
+        )
         
         # 验证结果
         assert "故宫博物院" in result  # 景点名称
@@ -248,16 +256,14 @@ async def test_workflow_step2_book_attraction_ticket_success():
 async def test_book_attraction_ticket_no_destination():
     """缺少景点名称参数的错误处理"""
     
-    booking_intent_dict = {
-        "destination": "",  # 空景点名称
-        "visit_date": date(2024, 4, 1),
-        "adult_count": 1,
-        "confidence": 0.95
-    }
-    
+    # 空景点名称
     # 即使没有景点名称，函数也不应该调用API
     with patch("backend.app.utils.attraction_recommendation._search_attraction") as mock_search:
-        result = await book_attraction_ticket.ainvoke(booking_intent_dict)
+        result = await _execute_book_attraction_ticket(
+            destination="",
+            visit_date=date(2024, 4, 1),
+            adult_count=1
+        )
         
         # 应该返回错误信息，而不是调用API
         assert "缺少必要参数" in result or "景点名称" in result
@@ -268,13 +274,6 @@ async def test_book_attraction_ticket_no_destination():
 async def test_book_attraction_ticket_not_found():
     """景点未找到的错误处理"""
     
-    booking_intent_dict = {
-        "destination": "不存在的景点XYZ",
-        "visit_date": date(2024, 4, 1),
-        "adult_count": 1,
-        "confidence": 0.95
-    }
-    
     # 景点查询API返回空结果
     mock_attraction_response = {"attractions": []}
     
@@ -283,7 +282,11 @@ async def test_book_attraction_ticket_not_found():
         
         mock_search.return_value = mock_attraction_response
         
-        result = await book_attraction_ticket.ainvoke(booking_intent_dict)
+        result = await _execute_book_attraction_ticket(
+            destination="不存在的景点XYZ",
+            visit_date=date(2024, 4, 1),
+            adult_count=1
+        )
         
         # 应该返回景点未找到的信息
         assert "未找到" in result or "抱歉" in result

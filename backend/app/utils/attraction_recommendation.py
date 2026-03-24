@@ -5,10 +5,28 @@ from datetime import date
 from pydantic import BaseModel, Field
 from backend.config import settings
 from langchain.tools import tool
-from backend.app.utils.travel_intent_parser import AttractionTicketBookingIntent
 
 
-# 1. 定义推荐景点工具的输入 Schema
+# ========== 数据模型 ==========
+
+class AttractionTicketBookingIntent(BaseModel):
+    """景区门票预订意图 - 结构化数据模型"""
+    destination: str = Field(description="景点名称（例如'故宫'、'长城'）")
+    visit_date: Optional[date] = Field(default=None, description="计划访问日期")
+    adult_count: int = Field(default=0, description="成人数量")
+    student_count: int = Field(default=0, description="学生数量")
+    child_count: int = Field(default=0, description="儿童数量")
+    elderly_count: int = Field(default=0, description="老年人数量")
+    attraction_id: Optional[str] = Field(default=None, description="景点ID")
+    max_price_per_ticket: Optional[float] = Field(default=None, description="单张票最高接受价格")
+    prefer_combined_ticket: bool = Field(default=False, description="是否倾向于购买套票")
+    has_special_needs: bool = Field(default=False, description="是否有特殊需求")
+    special_needs_description: Optional[str] = Field(default=None, description="特殊需求描述")
+    confidence: float = Field(default=0.8, description="意图识别置信度")
+
+
+# ========== 工具输入 Schemas ==========
+
 class RecommendAttractionsInput(BaseModel):
     destination: str = Field(description="旅游目的地城市或地区名称（例如'北京'、'西安'）")
     travel_days: int = Field(description="旅游天数", ge=1, le=30)
@@ -16,30 +34,21 @@ class RecommendAttractionsInput(BaseModel):
     interests: Optional[str] = Field(default=None, description="兴趣爱好，如'文化', '自然', '美食'等")
 
 
-# 2. 定义获取门票信息工具的输入 Schema
 class GetTicketInput(BaseModel):
     attraction_id: str = Field(description="景点的唯一标识符")
     ticket_type: Optional[str] = Field(default="all", description="门票类型：'成人', '学生', '儿童', 'all'")
     visit_date: Optional[str] = Field(default=None, description="计划访问日期，格式: YYYY-MM-DD")
 
 
-@tool("recommend_attractions", args_schema=RecommendAttractionsInput)
-async def recommend_attractions(
+# ========== 景点推荐工具 ==========
+
+async def _execute_recommend_attractions(
     destination: str,
     travel_days: int,
     budget: str = "中等",
     interests: Optional[str] = None
 ) -> str:
-    """
-    workflow步骤1: 根据城市名称推荐优质景点
-    
-    使用场景：
-    - 用户说："我想去北京" → 调用此函数 destination="北京"
-    - 返回北京所有优质景点列表（故宫、长城、颐和园等）
-    - 用户从列表中选择具体景点（如"故宫"）
-    - 然后调用 book_attraction_ticket 进行门票预订
-    """
-
+    """景点推荐的核心实现逻辑"""
     try:
         # 构造推荐请求
         recommendation_request = {
@@ -84,18 +93,28 @@ async def recommend_attractions(
         return f"推荐异常：{str(e)}"
 
 
-@tool("get_ticket_info", args_schema=GetTicketInput)
-async def get_ticket_info(
+@tool("recommend_attractions", args_schema=RecommendAttractionsInput)
+async def recommend_attractions(
+    destination: str,
+    travel_days: int,
+    budget: str = "中等",
+    interests: Optional[str] = None
+) -> str:
+    """
+    推荐指定城市/地区的优质景点。
+    调用此工具可获得该地区的景点列表、评分、门票价格等信息，帮助用户选择景点。
+    """
+    return await _execute_recommend_attractions(destination, travel_days, budget, interests)
+
+
+# ========== 门票信息工具 ==========
+
+async def _execute_get_ticket_info(
     attraction_id: str,
     ticket_type: str = "all",
     visit_date: Optional[str] = None
 ) -> str:
-    """
-    获取景点的门票信息并提供购买链接。
-    根据景点 ID 和访问日期，获取可用的门票类型、价格和购买链接。
-    帮助用户快速购票，支持多种门票类型（成人、学生、儿童等）。
-    """
-
+    """获取景点门票信息的核心实现逻辑"""
     if not attraction_id:
         return "错误：缺少必要参数 'attraction_id'（景点ID）"
 
@@ -141,8 +160,23 @@ async def get_ticket_info(
         return f"获取门票信息异常：{str(e)}"
 
 
-@tool("book_attraction_ticket", args_schema=AttractionTicketBookingIntent)
-async def book_attraction_ticket(
+@tool("get_ticket_info", args_schema=GetTicketInput)
+async def get_ticket_info(
+    attraction_id: str,
+    ticket_type: str = "all",
+    visit_date: Optional[str] = None
+) -> str:
+    """
+    获取景点的门票信息并提供购买链接。
+    根据景点 ID 和访问日期，获取可用的门票类型、价格和购买链接。
+    帮助用户快速购票，支持多种门票类型（成人、学生、儿童等）。
+    """
+    return await _execute_get_ticket_info(attraction_id, ticket_type, visit_date)
+
+
+# ========== 景点门票预订工具 ==========
+
+async def _execute_book_attraction_ticket(
     destination: str,
     visit_date: Optional[date] = None,
     adult_count: int = 0,
@@ -156,26 +190,12 @@ async def book_attraction_ticket(
     special_needs_description: Optional[str] = None,
     **kwargs
 ) -> str:
-    """
+    """景点门票预订的核心实现逻辑
+    
     【核心工作流函数】景区门票预订 - 从景点选择直达付款界面
     
     重要：destination 参数在此函数中是景点名称（如"故宫"），不是城市名称
-    
-    工作流程说明：
-    1. 用户输入："我想去北京" 
-       → 调用 recommend_attractions(destination="北京")  # 城市名称
-       → 返回景点列表：[故宫, 长城, 颐和园, ...]
-    
-    2. 用户选择："我要去故宫，3个成人、1个儿童" 
-       → 调用本函数 book_attraction_ticket(destination="故宫", adult_count=3, child_count=1)  # 景点名称
-       → 本函数自动执行：
-          a) 查询景点详情（_search_attraction）
-          b) 查询最优门票方案（_get_optimal_tickets）
-          c) 返回多种购票选项和直达付款界面的链接
-    
-    3. 最终结果：用户看到购票方案，点击"直达付款界面"即可进入支付流程
     """
-    
     try:
         # 验证必填项
         if not destination:
@@ -267,7 +287,42 @@ async def book_attraction_ticket(
         return f"景点门票预订异常：{str(e)}"
 
 
-# ============= 辅助函数 - 调用真实API的入口 =============
+@tool("book_attraction_ticket", args_schema=AttractionTicketBookingIntent)
+async def book_attraction_ticket(
+    destination: str,
+    visit_date: Optional[date] = None,
+    adult_count: int = 0,
+    student_count: int = 0,
+    child_count: int = 0,
+    elderly_count: int = 0,
+    attraction_id: Optional[str] = None,
+    max_price_per_ticket: Optional[float] = None,
+    prefer_combined_ticket: bool = False,
+    has_special_needs: bool = False,
+    special_needs_description: Optional[str] = None,
+    **kwargs
+) -> str:
+    """
+    预订景点门票，支持多人购票和多种门票类型。
+    此工具能自动匹配最优的购票方案（个票或套票），并提供直达付款界面的链接。
+    """
+    return await _execute_book_attraction_ticket(
+        destination=destination,
+        visit_date=visit_date,
+        adult_count=adult_count,
+        student_count=student_count,
+        child_count=child_count,
+        elderly_count=elderly_count,
+        attraction_id=attraction_id,
+        max_price_per_ticket=max_price_per_ticket,
+        prefer_combined_ticket=prefer_combined_ticket,
+        has_special_needs=has_special_needs,
+        special_needs_description=special_needs_description,
+        **kwargs
+    )
+
+
+# ========== 辅助函数 - 调用真实API的入口 ==========
 
 def _call_recommendation_api(request: dict) -> dict:
     """

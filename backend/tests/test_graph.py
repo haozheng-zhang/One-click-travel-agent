@@ -9,7 +9,7 @@ async def test_travel_agent_stream():
     
     # 1. 准备初始状态
     inputs:State = {
-        "messages": [HumanMessage(content="我想下周去北京玩，帮我看看天气")],
+        "messages": [HumanMessage(content="我想下周去北京玩，帮我看看天气，推荐景点预定门票")],
         "travel_intent": None,
         "weather": None,
         "next_action": NextActions()
