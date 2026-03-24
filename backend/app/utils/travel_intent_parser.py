@@ -43,6 +43,47 @@ class TravelIntentReport(BaseModel):
     # 补全标记
     auto_filled_fields: set[str] = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
 
+
+class AttractionTicketBookingIntent(BaseModel):
+    """景区门票预订意图 - 结构化数据模型"""
+    
+    # 核心信息 - 用于调用景区查询和门票预订API
+    destination: str = Field(default="", description="景区/目的地名称")
+    attraction_id: Optional[str] = Field(default=None, description="景区ID（如果系统已知）")
+    
+    # 时间信息
+    visit_date: Optional[date] = Field(default=None, description="计划访问日期")
+    visit_time: Optional[time] = Field(default=None, description="计划访问时间")
+    
+    # 门票相关
+    ticket_type: Optional[str] = Field(default=None, description="门票类型: 成人, 学生, 儿童, 老人等")
+    quantity: Optional[int] = Field(default=None, description="购票数量")
+    
+    # 人员信息 - 用于门票分类
+    adult_count: int = Field(default=0, description="成人数量")
+    student_count: int = Field(default=0, description="学生数量")
+    child_count: int = Field(default=0, description="儿童（6-12岁）数量")
+    elderly_count: int = Field(default=0, description="老年人数量")
+    
+    # 预算和偏好
+    max_price_per_ticket: Optional[float] = Field(default=None, description="单张票最高接受价格")
+    has_special_needs: bool = Field(default=False, description="是否有特殊需求（无障碍等）")
+    special_needs_description: Optional[str] = Field(default=None, description="特殊需求描述")
+    
+    # 购票信息
+    prefer_combined_ticket: bool = Field(default=False, description="是否倾向于购买套票")
+    need_transportation: bool = Field(default=False, description="是否需要景区内交通服务")
+    
+    # 额外信息
+    visiting_with_group: bool = Field(default=False, description="是否是团体预订")
+    group_size: Optional[int] = Field(default=None, description="团体人数")
+    extra_preferences: Optional[str] = Field(default=None, description="其他偏好或要求")
+    
+    # 置信度和补全信息
+    confidence: float = Field(default=0.8, description="意图识别置信度 (0-1)")
+    auto_filled_fields: List[str] = Field(default_factory=list, description="自动逻辑推断补全的字段列表")
+
+
 async def get_TravelIntentReport(user_query: str) -> dict[str, Any] | BaseModel:
     # 1. 构造 Prompt，注入当前日期
     prompt = ChatPromptTemplate.from_messages([
