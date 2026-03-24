@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .app.api import travel_planning
-from .app.config import settings
+from .config import settings
 
 # 加载环境变量 - 优先加载 .env.local，再加载 .env
 env_local_path = Path(__file__).parent / ".env.local"

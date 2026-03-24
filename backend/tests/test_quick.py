@@ -25,7 +25,7 @@ async def test_intent_parsing():
     try:
         # 导入 NLU 模块
         from app.core.nlu import parse_travel_intent
-        from app.config import settings
+        from backend.config import settings
         
         # 检查 API Key
         if not settings.LLM_API_KEY or settings.LLM_API_KEY == "your_LLM_api_key_here":
