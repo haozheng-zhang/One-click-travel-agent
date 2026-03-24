@@ -4,7 +4,7 @@
 
 import pytest
 import asyncio
-from app.core.nlu import parse_travel_intent, TravelNLUProcessor
+from backend.app.core.nlu import parse_travel_intent, TravelNLUProcessor
 
 
 class TestIntentParsing:
