@@ -1,3 +1,9 @@
+
+
+
+"----------------------------已弃置----------------------------"
+
+
 from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
@@ -34,26 +40,7 @@ from backend.app.core import get_llm
     
 #     return "\n".join(lines)
 
-class WeatherDetail(BaseModel):
-    """某一天的天气详情数据模型"""
-    location: str
-    the_date:date = Field(description="the weather on which being searched")
-    max_temp: int = Field(description="the maximum temperature")
-    min_temp: int = Field(description="the minimum temperature")
-    units: Literal["celsius", "fahrenheit"] = Field(
-        default="celsius",
-        description="Temperature unit preference"
-    )
-    condition: str = Field(description="天气状况，如：晴、雨、阴")
-    suggestion: float = Field(description="在该天气的出行指数，取值范围0~1，越适合出行则数值越大")
 
-class WeatherReport(BaseModel):
-    """最终交给用户的连续多天天气的结构化报告"""
-    status: bool =Field(default=False,description="是否查询成功")
-    days:int = Field(default=0,description="总天数")
-    repos: list[WeatherDetail] = Field(default_factory=list,description="(连续多天)天气的结构化报告")
-    message:str= Field(default_factory=str,description="若查询失败则说明失败的原因，若成功则总结这份报告并给出出行建议")
-    source:str= Field(default_factory=str,description="天气信息来源，若没有查询到天气则置为空字符串")
 model=get_llm()
 # weather_agent = create_agent(
 #     model,
@@ -98,31 +85,31 @@ model=get_llm()
 
 
 
-async def get_weather_service(agent_query: str) -> WeatherReport:
+# async def get_weather_service(agent_query: str) -> WeatherReport:
 
-    search_tool = TavilySearchResults(k=3) 
-    search_docs = await search_tool.ainvoke({"query": f"{agent_query}"})
+#     search_tool = TavilySearchResults(k=3) 
+#     search_docs = await search_tool.ainvoke({"query": f"{agent_query}"})
     
-    search_context = "\n".join([d["content"] for d in search_docs])
-    parser_llm = model.with_structured_output(WeatherReport)
+#     search_context = "\n".join([d["content"] for d in search_docs])
+#     parser_llm = model.with_structured_output(WeatherReport)
     
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", f"你是一个专业的天气数据分析师。"
-                   "请根据提供的搜索上下文，提炼出结构化的天气报告。"
-                   "如果搜索结果不包含具体温度或与原始问题无关，请标记 status 为 False。"),
-        ("user", "搜索上下文：\n{context}\n\n母智能体原始问题：{query}")
-    ])
+#     prompt = ChatPromptTemplate.from_messages([
+#         ("system", f"你是一个专业的天气数据分析师。"
+#                    "请根据提供的搜索上下文，提炼出结构化的天气报告。"
+#                    "如果搜索结果不包含具体温度或与原始问题无关，请标记 status 为 False。"),
+#         ("user", "搜索上下文：\n{context}\n\n母智能体原始问题：{query}")
+#     ])
     
-    chain = prompt | parser_llm
+#     chain = prompt | parser_llm
     
-    report = await chain.ainvoke({
-        "context": search_context,
-        "query": agent_query
-    })
-    if isinstance(report,WeatherReport):return report
-    return WeatherReport(message="未能提取到有效的天气信息", status=False)
+#     report = await chain.ainvoke({
+#         "context": search_context,
+#         "query": agent_query
+#     })
+#     if isinstance(report,WeatherReport):return report
+#     return WeatherReport(message="未能提取到有效的天气信息", status=False)
 
 
-tavily_client = TavilyClient(api_key="tvly-YOUR_API_KEY")
-response = tavily_client.search("在python中如何使用tavily")
-print(response)
+# tavily_client = TavilyClient(api_key="tvly-YOUR_API_KEY")
+# response = tavily_client.search("在python中如何使用tavily")
+# print(response)

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from backend.app.core import get_llm
 from datetime import date
 from backend.app.utils.travel_intent_parser import TravelIntentReport, get_TravelIntentReport
-from backend.app.utils.weather_forecaster import WeatherReport, get_weather_service
+from backend.app.utils.weather_parser import search_weather_and_parse,WeatherReport
 from backend.app.utils.web_searcher import web_search
 from langgraph.graph import END, START, StateGraph, add_messages
 from langgraph.checkpoint.memory import MemorySaver
@@ -73,7 +73,7 @@ class State(TypedDict):
 #     ])
 #     return {"next_action": result.next_action} # type: ignore
 
-tools = [get_TravelIntentReport , web_search]
+tools = [get_TravelIntentReport,web_search,search_weather_and_parse]
 
 model = get_llm().bind_tools(tools)
 
@@ -88,7 +88,6 @@ async def model_call(state:State) :
 graph_builder = StateGraph(State)
 graph_builder.add_node("meta_agent", model_call)
 graph_builder.set_entry_point("meta_agent")
-
 
 def should_continue(state: State):
     last_msg = state["messages"][-1]
@@ -120,37 +119,31 @@ def print_stream(stream):
             print(message)
         else:
             message.pretty_print()
-inputs:State = {
-    "messages": [HumanMessage(content="我想去北京")],
-    "travel_intent": None, 
-    "weather": None,
-    "next_action": NextActions()
-}
 
-print_stream(graph.astream(inputs, stream_mode="values"))
+# print_stream(graph.astream(inputs, stream_mode="values"))
 
-# async def run_agent(user_input: str):
-#     inputs:State = {
-#         "messages": [HumanMessage(content=user_input)],
-#         "travel_intent": None, 
-#         "weather": None,
-#         "next_action": NextActions()
-#     }
+async def run_agent(user_input: str):
+    inputs:State = {
+        "messages": [HumanMessage(content=user_input)],
+        "travel_intent": None, 
+        "weather": None,
+        "next_action": NextActions()
+    }
     
-#     config = {"configurable": {"thread_id": "test_user_1"}}
+    config = {"configurable": {"thread_id": "test_user_1"}}
     
-#     # 使用 astream 处理异步节点
-#     async for event in graph.astream(inputs, stream_mode="values"):
-#         if "messages" in event:
-#             last_msg = event["messages"][-1]
-#             # 打印消息
-#             last_msg.pretty_print()
+    # 使用 astream 处理异步节点
+    async for event in graph.astream(inputs, stream_mode="values"):
+        if "messages" in event:
+            last_msg = event["messages"][-1]
+            # 打印消息
+            last_msg.pretty_print()
             
-#             # 💡 华为实习面试加分点：展示状态机的实时演进
-#             if event.get("travel_intent"):
-#                 print(f"核心状态更新 [TravelIntent]: {event['travel_intent'].destination} | {event['travel_intent'].start_date}")
+            # 💡 华为实习面试加分点：展示状态机的实时演进
+            if event.get("travel_intent"):
+                print(f"核心状态更新 [TravelIntent]: {event['travel_intent'].destination} | {event['travel_intent'].start_date}")
 
-# # 运行
-# import asyncio
-# if __name__ == "__main__":
-#     asyncio.run(run_agent("我想去北京玩，大概下周三出发"))
+# 运行
+import asyncio
+if __name__ == "__main__":
+    asyncio.run(run_agent("我想去北京玩，大概下周三出发"))

@@ -48,9 +48,12 @@ class TravelIntentReport(BaseModel):
     # 补全标记
     auto_filled_fields: set[str] = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
 
-@tool("web_search", args_schema=HumanMessage)
+class TravelIntentInput(BaseModel):
+    query: str = Field(description="用户最近一条关于旅行意图的原始自然语言描述")
+
+@tool("get_TravelIntent", args_schema=TravelIntentInput)
 async def get_TravelIntentReport(
-    user_query: HumanMessage,
+    query: HumanMessage,
     tool_call_id: Annotated[str, InjectedToolCallId]
     ) -> Command:
     """意图解析专家：将用户的自然语言行程需求转化为结构化的旅行意图报告。
@@ -72,7 +75,7 @@ async def get_TravelIntentReport(
     chain = prompt | get_llm().with_structured_output(TravelIntentReport)
     
     # 3. 执行
-    report = await chain.ainvoke({"input": user_query})
+    report = await chain.ainvoke({"input": query})
     if report is None:
         report = TravelIntentReport()
 
