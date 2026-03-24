@@ -5,7 +5,7 @@
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List, dict, Any
+from typing import Optional, Any
 from datetime import datetime
 
 
@@ -47,11 +47,11 @@ class ItineraryCard(BaseModel):
     
     # 订单信息
     transport_order: Optional[dict[str, Any]] = None  # 车票/机票信息
-    hotels: [dict[str, Any]] = Field(default_factory=list)  # 酒店列表
-    tickets: [dict[str, Any]] = Field(default_factory=list)  # 门票列表
+    hotels: list[str] = Field(default_factory=list)  # 酒店列表
+    tickets: list[str] = Field(default_factory=list)  # 门票列表
     
     # 日程
-    itinerary: [ItineraryItem] = Field(default_factory=list)
+    itinerary: ItineraryItem
     
     # 状态
     status: str  # draft, confirmed, in_progress, completed
