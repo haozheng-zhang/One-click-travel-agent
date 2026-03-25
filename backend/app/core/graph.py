@@ -34,6 +34,28 @@ def merge_travel_intent(old: Optional[TravelIntentReport], new: TravelIntentRepo
             
     return TravelIntentReport(**updated_data)
 
+def get_current_turn_tools(messages):
+    """工具函数：获取当前回合（最后一条 HumanMessage 之后）所有调用过的工具名"""
+    # 1. 逆序查找最后一个 HumanMessage 的索引
+    last_human_index = -1
+    for i in range(len(messages) - 1, -1, -1):
+        if isinstance(messages[i], HumanMessage):
+            last_human_index = i
+            break
+    
+    if last_human_index == -1:
+        return set()
+
+    # 2. 切片获取本轮所有消息
+    current_turn_messages = messages[last_human_index + 1:]
+    
+    # 3. 提取所有 ToolMessage 的名称
+    called_tools = {
+        m.name for m in current_turn_messages 
+        if isinstance(m, ToolMessage)
+    }
+    return called_tools
+
 class NextActions(BaseModel):
     travel_intent: bool = Field(default=False,description="是否需要更新出行规划")
     web_search: bool = Field(default=False,description="是否需要通用联网搜索")
@@ -45,43 +67,36 @@ class State(TypedDict):
     weather:Optional[WeatherReport]
     next_action:NextActions
 
-# class MessageClassifier(BaseModel):
-#     """分析用户意图，决定更新什么业务模块"""
-#     next_action: NextActions = Field(description="key: 智能体将作出的下一步（一个或多个）行为")
-
-
-# async def classify_message(state: State):
-#     last_message = state["messages"][-1]
-#     classifier_llm = get_llm().with_structured_output(MessageClassifier)
-
-#     system_prompt = SystemMessage(content=
-#         f"""
-#         你是一个拥有‘时间感知能力’的智能体决策专家。
-
-#         你的任务：
-#         1. 分析用户输入的意图（travel_intent, weather, general）。
-#         2. 时间归一化：如果用户提到“明天”、“下周”、“后天”等相对时间，请根据今天的日期将其转换为 YYYY-MM-DD(星期几) 格式。
-#         3. 在 next_action 的 value 中，输出包含绝对日期的指令。
-        
-#         示例：
-#         - 输入：“明天我想去上海迪士尼”
-#         - 输出：将next_action.call_search和next_action.
-#         """
-#                                   )
-#     result = classifier_llm.invoke([
-#         system_prompt,
-#         last_message
-#     ])
-#     return {"next_action": result.next_action} # type: ignore
 
 tools = [get_TravelIntentReport, web_search, search_weather_and_parse, recommend_attractions, get_ticket_info, book_attraction_ticket]
 
 model = get_llm().bind_tools(tools)
 
 async def model_call(state:State) :
-    system_prompt = SystemMessage(content=
-        "You are my AI assistant, please answer my query to the best of your ability."
-        f"今天的日期是：{date.today()} (星期{date.today().strftime('%A')})。"
+    weather_info = "尚未获取天气信息。"
+    intent_info = "尚未分析出明确行程意图。"
+    if state.get("weather"):
+        weather_info = f"{state['weather']}"
+    if state.get("travel_intent"):
+        intent_info = f"{state['travel_intent']}"
+
+    called_tools = get_current_turn_tools(state["messages"])
+    
+    weather_hint = ""
+    if "search_weather_and_parse" in called_tools:
+        weather_hint = "【提示】你在本轮操作中已经更新了天气数据，你无需再次查询天气，但是最终给用户的回复中应该提及这个天气数据（并给出出行建议）。"
+    system_prompt = SystemMessage(
+        "你是一个专业的旅游助手。请根据当前的系统状态和聊天记录回答用户。"
+        f"\n今天的日期是：{date.today()} (星期{date.today().strftime('%A')})。"
+        "请先将用户输入中的相对时间（如明天、下周三）翻译为绝对时间，调用工具时也请只输入绝对时间（如：2026.4.1 上海天气预报）以获得更精准的输出。"
+        f"\n\n--- 系统当前感知到的状态 ---"
+        f"\n[当前行程意图快照]: {intent_info}"
+        f"\n[实时天气数据]: {weather_info}"
+        f"\n---------------------------"
+        
+        "\n请注意：如果你感知到的数据（如天气数据）与行程意图不匹配，可以调用工具更新；" \
+        "\n如果行程意图中有信息缺失，可以追问。" \
+        f"{weather_hint}"
     )
     response = await model.ainvoke([system_prompt] + state["messages"])
     return {"messages": [response]}
@@ -123,28 +138,28 @@ def print_stream(stream):
 
 # print_stream(graph.astream(inputs, stream_mode="values"))
 
-async def run_agent(user_input: str):
-    inputs:State = {
-        "messages": [HumanMessage(content=user_input)],
-        "travel_intent": None, 
-        "weather": None,
-        "next_action": NextActions()
-    }
+# async def run_agent(user_input: str):
+#     inputs:State = {
+#         "messages": [HumanMessage(content=user_input)],
+#         "travel_intent": None, 
+#         "weather": None,
+#         "next_action": NextActions()
+#     }
     
-    config = {"configurable": {"thread_id": "test_user_1"}}
+#     config = {"configurable": {"thread_id": "test_user_1"}}
     
-    # 使用 astream 处理异步节点
-    async for event in graph.astream(inputs, stream_mode="values"):
-        if "messages" in event:
-            last_msg = event["messages"][-1]
-            # 打印消息
-            last_msg.pretty_print()
+#     # 使用 astream 处理异步节点
+#     async for event in graph.astream(inputs, stream_mode="values"):
+#         if "messages" in event:
+#             last_msg = event["messages"][-1]
+#             # 打印消息
+#             last_msg.pretty_print()
             
-            # 💡 华为实习面试加分点：展示状态机的实时演进
-            if event.get("travel_intent"):
-                print(f"核心状态更新 [TravelIntent]: {event['travel_intent'].destination} | {event['travel_intent'].start_date}")
+#             # 💡 华为实习面试加分点：展示状态机的实时演进
+#             if event.get("travel_intent"):
+#                 print(f"核心状态更新 [TravelIntent]: {event['travel_intent'].destination} | {event['travel_intent'].start_date}")
 
-# 运行
-import asyncio
-if __name__ == "__main__":
-    asyncio.run(run_agent("我想去北京玩，大概下周三出发"))
+# # 运行
+# import asyncio
+# if __name__ == "__main__":
+#     asyncio.run(run_agent("我想去北京玩，大概下周三出发"))

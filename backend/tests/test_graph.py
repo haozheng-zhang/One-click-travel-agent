@@ -18,22 +18,18 @@ async def test_travel_agent_stream():
     # 2. 配置会话 ID (用于 MemorySaver)
     config = {"configurable": {"thread_id": "pytest_session_001"}}
     
-    print("\n" + "="*20 + " 智能体思考开始 " + "="*20)
-    
     # 3. 执行并步进打印
     # stream_mode="values" 会让你看到每一步后 State 的完整快照
     async for event in graph.astream(inputs,stream_mode="values"):
         if "messages" in event and event["messages"]:
             node_output = event["messages"][-1]
-            
-            # 打印当前是谁在说话/执行
-            sender = "🤖 AI" if node_output.type == "ai" else "🛠️ Tool"
-            print(f"\n[{sender}]:")
             node_output.pretty_print()
             
             # 打印我们最关心的业务状态
-            if event.get("travel_intent") and event["travel_intent"].destinations:
-                print(f"👉 [当前意图]: {event['travel_intent'].destinations}")
+            if event.get("travel_intent"):
+                print(f"[当前意图]: {event['travel_intent'].destinations}")
+            if event.get("weather"):
+                print(f"📊 [当前天气]: {event['weather'].repos}")
     
     print("\n" + "="*20 + " 测试流程结束 " + "="*20)
 

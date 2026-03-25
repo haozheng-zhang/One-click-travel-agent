@@ -1,144 +1,64 @@
-# 一键出行智能体系统
+# One-click-travel-agent
 
-> 聚合所有出行需求的AI助手 - 一次语音/文本输入，快速生成完整行程方案
+> 这是一个基于 LangGraph 架构开发的智能旅行规划 Agent。项目核心是通过 ReAct (Reasoning and Acting) 模式，将用户的模糊出行意图转化为结构化的旅行方案。
 
-## 🎯 系统架构
+## 核心特性
+- **ReAct** 循环架构：利用 LangGraph 显式构建推理-行动循环，相比于线性的 langChain，具备更强的逻辑容错与自我修正能力。
 
-```
-前端交互层（Web）
-      ↓
-    API Gateway
-      ↓
-    核心能力层（LangChain + NLU）
-      ↓
-  工具对接层（多源API）
-      ↓
-   数据安全机制
-```
+- 强类型状态管理：集成 Pydantic 进行 State 定义，通过自定义函数实现旅行意图（`TravelIntent`）的增量式合并，确保长对话链路中数据的一致性。
 
-## 📋 项目进度
+- 指令式状态更新 (Command Pattern)：工具节点通过返回 `Command` 对象直接操作 Graph 状态，实现了业务逻辑执行与状态演进的解耦。
 
-### Phase 1: MVP 核心模块（当前）
-- [x] 项目初始化
-- [ ] **Step 1**: 意图解析与需求提取 (LangChain + Kimi)
-- [ ] **Step 2**: 前置信息校验与数据查询框架
-- [ ] **Step 3**: 行程方案生成引擎
-- [ ] **Step 4**: 用户交互与微调接口
-- [ ] **Step 5**: 订单管理服务
-- [ ] **Step 6**: 实时服务与应急系统
-- [ ] **Step 7**: 人工智能行程助手
+- 数据提纯流水线：内置“搜索-解析-结构化”管道，能将非结构化的互联网搜索碎片提炼为强类型的 `WeatherReport` 和 `TravelIntentReport`。
 
-### Phase 2: 第三方API集成
-- [ ] 天气服务接入
-- [ ] 车票/机票接入
-- [ ] 酒店预订接入
-- [ ] 景区门票接入
+你可以从 **`backend/app/core/graph.py`** 开始阅读源码，了解更多项目架构相关信息。
 
-### Phase 3: 生产部署
-- [ ] 前端UI优化
-- [ ] 性能测试
-- [ ] 安全审计
+## 技术栈
+- 框架: **LangChain / LangGraph**
 
-## 🗂️ 项目结构
+- 测试模型: **deepseek v3.2**
 
-```
-一键出行/
-├── backend/                  # 后端服务
-│   ├── app/
-│   │   ├── core/            # 核心能力模块
-│   │   │   ├── llm/         # LLM集成（Kimi）
-│   │   │   ├── nlu/         # 自然语言理解
-│   │   │   ├── planner/     # 行程规划引擎
-│   │   │   └── executor/    # 自动执行引擎
-│   │   ├── tools/           # 工具接口层
-│   │   │   ├── weather/
-│   │   │   ├── travel/
-│   │   │   ├── hotel/
-│   │   │   ├── ticket/
-│   │   │   └── common/
-│   │   ├── api/             # API端点
-│   │   ├── models/          # 数据模型
-│   │   ├── services/        # 业务逻辑
-│   │   └── utils/           # 工具库
-│   ├── tests/
-│   ├── config/
-│   ├── requirements.txt
-│   └── main.py
-├── frontend/                 # Web前端
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── index.html
-│   └── package.json
-├── docs/                     # 设计文档
-│   ├── architecture.md
-│   ├── api-design.md
-│   └── user-flows.md
-└── README.md
-```
+- 数据源: **Tavily Search API**
 
-## 🚀 快速开始
+- 校验: **Pydantic v2.10.0**
 
-### 前置条件
-- Python 3.10+
-- Node.js 18+ (前端)
-- Kimi API Key
+- 异步: **Asyncio v1.3.0**
 
-### 后端启动
+阅读 **`requirements.txt`** 查看相关技术栈。
+
+## 快速开始
+### 1. 环境准备
+
 ```bash
-cd backend
+git clone https://github.com/haozheng-zhang/One-click-travel-agent.git
+cd One-click-travel-agent
+# 这里可以创建Python虚拟环境：
+# python -m venv .venv
+# source .venv/bin/activate
 pip install -r requirements.txt
-python main.py
 ```
-
-### 前端启动
+### 2. 配置环境变量
+在根目录下创建 .env 文件：
 ```bash
-cd frontend
-npm install
-npm run dev
+cp backend/.env.example backend/.env
 ```
+打开`backend/.env`文件，填入你的API_KEY等信息：
+```Python
+LLM_API_KEY=your_llm_api_key_here
+LLM_BASE_URL=your_llm_base_url_here # https://api.deepseek.com/v1
+LLM_MODEL_NAME=your_model_name_here # deepseek-chat
 
-## 📚 核心模块说明
-
-- **NLU模块**: 精准解析出行需求，提取参数
-- **规划引擎**: 生成无冲突的多方案
-- **执行引擎**: 自动调用各类API完成操作
-- **实时监控**: 跟踪行程动态，应急调整
-
-## 📝 API 列表 (规划阶段)
-
-待补充...
-
-## ⚙️ 配置
-
-创建 `.env` 文件：
+TAVILY_API_KEY=your_key_here
 ```
-KIMI_API_KEY=your_api_key_here
-ENVIRONMENT=development
-LOG_LEVEL=INFO
+### 3. 运行单元测试
+```bash
+pytest -s tests/test_graph.py # 也可以运行其他测试文件
 ```
+可以更改测试文件内的输入以测试智能体对不同输入的反应。
+## 当前进度
+- 已配置好`docker`的基础设施。但要等实现前端等部分后才能实现一键打包运行。
+- 前端的`vue`框架有待完善。
+- 提示词有待完善。
+- 工具的数量和功能性有待完善。
 
-## 📖 使用示例
-
-```
-用户输入: "帮我规划3月20号从北京到云南大理的自驾游，3天2晚，人均预算2000"
-
-系统输出:
-✓ 检测到行程需求
-✓ 提取参数: 出发地(北京) → 目的地(大理) | 时间(2025-03-20 ~ 3.22) | 人数(?) | 交通(自驾) | 预算(2000/人)
-✓ 补全默认: 人数默认2人，出发时间默认11:00，返回19:00
-✓ 生成行程方案
-✓ 冲突校验完成
-> 确认 / 返回修改
-```
-
-## 🔐 安全性
-
-- 所有用户数据加密存储
-- API调用和订单操作需明确授权
-- 个人信息严格遵守PIPL
-
----
-
-**开发者**: 智能出行团队  
-**更新**: 2025-03-18
+>更新:  `2025-03-25`

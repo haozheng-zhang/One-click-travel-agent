@@ -51,9 +51,9 @@ class TravelIntentReport(BaseModel):
 class TravelIntentInput(BaseModel):
     query: str = Field(description="用户最近一条关于旅行意图的原始自然语言描述")
 
-@tool("get_TravelIntent", args_schema=TravelIntentInput)
+@tool("get_TravelIntentReport", args_schema=TravelIntentInput)
 async def get_TravelIntentReport(
-    query: HumanMessage,
+    query: str,
     tool_call_id: Annotated[str, InjectedToolCallId]
     ) -> Command:
     """意图解析专家：将用户的自然语言行程需求转化为结构化的旅行意图报告。
@@ -65,7 +65,7 @@ async def get_TravelIntentReport(
             f"今天的日期是：{date.today()} (星期{date.today().strftime('%A')})。"
             "请将用户提到的相对时间（如“明天”“下周三”）翻译成绝对时间。"
             "然后从已翻译的用户输入中提取出行意图，填入TravelIntentReport的字段并返回。"
-            "如果用户没提到某项信息，请保持该字段为 None。"
+            "如果用户没提到某项信息，请保持该字段为默认值。"
             "如果你对某个字段是猜测的，请将其记录在 auto_filled_fields 中。"
         )),
         ("human", "{input}")

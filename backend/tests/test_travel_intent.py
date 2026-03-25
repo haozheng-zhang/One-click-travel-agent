@@ -8,7 +8,7 @@ from backend.app.utils.travel_intent_parser import get_TravelIntentReport,Travel
 async def test_travel_intent_basic():
     """测试基础意图识别"""
     query = "帮我订一张明天从上海去北京的高铁票"
-    report = await get_TravelIntentReport(HumanMessage(query))
+    report = await get_TravelIntentReport(query)
     
     assert isinstance(report, TravelIntentReport)
     assert "上海" in report.origin
@@ -22,7 +22,7 @@ async def test_travel_intent_basic():
 async def test_travel_intent_complex():
     """测试复杂多槽位填充"""
     query = "下周五我们一家三口想去三亚玩5天，人均预算5000，想要海景房"
-    report = await get_TravelIntentReport(HumanMessage(query))
+    report = await get_TravelIntentReport(query)
     assert isinstance(report, TravelIntentReport)
     assert report.person_count == 3
     assert report.duration_days == 5
@@ -37,7 +37,7 @@ async def test_travel_intent_complex():
 async def test_travel_intent_ambiguous():
     """测试模糊输入的鲁棒性"""
     query = "随便看看去哪儿玩比较好"
-    report = await get_TravelIntentReport(HumanMessage(query))
+    report = await get_TravelIntentReport(query)
     
     # 即使信息缺失，也应返回模型实例，但字段多为 None
     assert isinstance(report, TravelIntentReport)
