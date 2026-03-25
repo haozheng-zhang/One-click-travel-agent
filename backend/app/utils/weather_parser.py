@@ -30,7 +30,7 @@ class WeatherReport(BaseModel):
     message:str= Field(default_factory=str,description="若查询失败则说明失败的原因，若成功则总结这份报告并给出出行建议")
     source:str= Field(default_factory=str,description="天气信息来源，若没有查询到天气则置为空字符串")
 
-async def parse_weather_to_state(raw_text: str) -> WeatherReport:
+async def parse_weather_to_state(raw_text: str) -> WeatherReport|None:
 
     # 1. 内部调用一个轻量级、高逻辑性的模型（如 gpt-4o-mini）进行结构化
     parser_prompt = ChatPromptTemplate.from_messages([
@@ -41,11 +41,12 @@ async def parse_weather_to_state(raw_text: str) -> WeatherReport:
     # 使用 with_structured_output 确保输出符合 WeatherReport Schema
     chain = parser_prompt | get_llm().with_structured_output(WeatherReport)
     report = await chain.ainvoke({"text": raw_text})
-    if report == None: return WeatherReport()
-    assert isinstance(report,WeatherReport)
+    # if report == None: return WeatherReport()
+    # assert isinstance(report,WeatherReport)
+    assert isinstance(report,WeatherReport|None )
     return report
     
-@tool("weather_search")
+@tool("search_weather_and_parse")
 async def search_weather_and_parse(query: str, tool_call_id: Annotated[str, InjectedToolCallId]):
     """
     从搜索引擎中获取天气并结构化为WeatherReport。

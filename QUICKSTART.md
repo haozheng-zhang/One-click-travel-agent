@@ -11,8 +11,8 @@ cd backend
 # 创建 .env 文件
 cp .env.example .env
 
-# 编辑 .env 文件，填入你的 Deepseek API Key
-# DEEPSEEK_API_KEY=sk-xxxxxxxxxxxx
+# 编辑 .env 文件，填入你的 LLM API Key
+# LLM_API_KEY=sk-xxxxxxxxxxxx
 ```
 
 ### 第二步：构建docker镜像并启动

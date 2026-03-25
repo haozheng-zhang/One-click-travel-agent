@@ -3,5 +3,5 @@
 """
 
 __version__ = "0.1.0"
-__author__ = "一键出行开发团队"
-__description__ = "聚合所有出行需求的AI智能体系统"
+__author__ = "HaozhengZhang and SoulZihao"
+__description__ = "基于 LangGraph + ReAct 的智能出行规划系统"

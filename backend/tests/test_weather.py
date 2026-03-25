@@ -1,6 +1,5 @@
 import pytest
 import os
-from backend.app.utils.weather_forecaster import get_weather_service, WeatherReport
 
 
 @pytest.mark.asyncio
