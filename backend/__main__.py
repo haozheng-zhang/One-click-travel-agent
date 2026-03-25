@@ -1,3 +1,3 @@
 """
-一键出行智能体 - 主程序入口
+One-click-travel-agent - 主程序入口
 """
