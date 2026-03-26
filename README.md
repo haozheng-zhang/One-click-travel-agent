@@ -1,4 +1,4 @@
-# One-click-travel-agent
+# 一键出行智能体系统（One-click-travel-agent）
 
 > 这是一个基于 LangGraph 架构开发的智能旅行规划 Agent。项目核心是通过 ReAct (Reasoning and Acting) 模式，将用户的模糊出行意图转化为结构化的旅行方案。
 
@@ -43,7 +43,7 @@ pip install -r requirements.txt
 cp backend/.env.example backend/.env
 ```
 打开`backend/.env`文件，填入你的API_KEY等信息：
-```Python
+```bash
 LLM_API_KEY=your_llm_api_key_here
 LLM_BASE_URL=your_llm_base_url_here # https://api.deepseek.com/v1
 LLM_MODEL_NAME=your_model_name_here # deepseek-chat

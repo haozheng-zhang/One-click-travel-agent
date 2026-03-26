@@ -76,7 +76,9 @@ async def get_TravelIntentReport(
     
     # 3. 执行
     report = await chain.ainvoke({"input": query})
+    content = "旅行意图报告已成功增量更新。"
     if report is None:
+        content = "旅行意图报告未更新新内容。"
         report = TravelIntentReport()
 
     # 2. 核心：返回 Command 对象
@@ -87,7 +89,7 @@ async def get_TravelIntentReport(
             # 必须包含 ToolMessage，否则 Meta-Agent 会因为收不到工具结果而报错
             "messages": [
                 ToolMessage(
-                    content="旅行意图报告已成功增量更新。", 
+                    content=content, 
                     tool_call_id=tool_call_id
                 )
             ]

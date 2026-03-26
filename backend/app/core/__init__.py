@@ -40,7 +40,7 @@ class LLMManager:
                 model=settings.LLM_MODEL_NAME,
                 api_key=settings.LLM_API_KEY,
                 base_url=settings.LLM_BASE_URL,
-                temperature=temperature if temperature is not None else getattr(settings, 'LLM_TEMPERATURE', 0.7),
+                temperature=temperature if temperature is not None else getattr(settings, 'LLM_TEMPERATURE', 0.5),
                 max_tokens=2000,
                 request_timeout=60
             )
