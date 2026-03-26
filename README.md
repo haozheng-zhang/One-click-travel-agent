@@ -1,6 +1,6 @@
 # 一键出行智能体系统（One-click-travel-agent）
 
-> 这是一个基于 LangGraph 架构开发的智能旅行规划 Agent。项目核心是通过 ReAct (Reasoning and Acting) 模式，将用户的模糊出行意图转化为结构化的旅行方案。
+> 这是一个基于 LangGraph 架构开发的智能旅行规划 Agent。项目核心是通过 ReAct (Reasoning and Acting) 模式，实现自然语言到结构化行程意图的端到端提取与自动化行程规划编排。
 
 ## 核心特性
 - **ReAct** 循环架构：利用 LangGraph 显式构建推理-行动循环，相比于线性的 langChain，具备更强的逻辑容错与自我修正能力。

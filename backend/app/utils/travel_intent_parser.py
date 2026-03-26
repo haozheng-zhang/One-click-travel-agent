@@ -1,4 +1,5 @@
 # from anyio import create_event
+import dspy
 from langchain.tools import InjectedToolCallId, tool
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
@@ -50,6 +51,19 @@ class TravelIntentReport(BaseModel):
 
 class TravelIntentInput(BaseModel):
     query: str = Field(description="用户最近一条关于旅行意图的原始自然语言描述")
+
+class TravelIntentSignature(dspy.Signature):
+    """
+    你是一个专业的旅游意图分析专家。
+    任务：
+    1. 将用户提到的相对时间（如“明天”“下周三”）翻译成绝对时间。
+    2. 从输入中提取出行意图，并填充到结构化报告中。
+    """
+    current_date = dspy.InputField(desc="今天的日期和星期")
+    query = dspy.InputField(desc="用户最近一条关于旅行意图的自然语言描述")
+    
+    # 直接使用你的 Pydantic 模型作为输出类型
+    report = dspy.OutputField(desc="生成的结构化 TravelIntentReport 对象")
 
 @tool("get_TravelIntentReport", args_schema=TravelIntentInput)
 async def get_TravelIntentReport(
