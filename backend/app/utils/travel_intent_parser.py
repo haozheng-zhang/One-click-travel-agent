@@ -1,4 +1,5 @@
 # from anyio import create_event
+import dspy
 from langchain.tools import InjectedToolCallId, tool
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
@@ -13,11 +14,11 @@ from langgraph.types import Command
 class Destination(BaseModel):
     """游玩某地的行程规划"""
     location:str=Field(default_factory=str, description="目的地，如“天津”")
-    attractions:OrderedDict[str,datetime]=Field(default_factory=OrderedDict, description="按时间先后顺序记录旅游景点及到访时间")
-    stay:str=Field(default_factory=str, description="用户居住于此的方式，如“某某酒店”，没有则填写“无”")
+    attractions:OrderedDict[str,datetime]|None=Field(default=None, description="按时间先后顺序记录旅游景点及到访时间")
+    stay:str|None=Field(default=None, description="用户居住于此的方式，如“某某酒店”，未知则留空，没有则填“无”")
     hotel_needed: bool = Field(default=False, description="是否需要预订酒店")
-    ticket_needed: list[str] = Field(default_factory=list, description="需要预定景点门票的景点列表")
-    transportation:str=Field(default_factory=str,description="详细叙述在此地的交通方式规划，包括离开此地的交通方式")
+    ticket_needed: list[str]|None = Field(default=None, description="需要预定景点门票的景点列表")
+    transportation:str|None=Field(default=None,description="详细叙述在此地的交通方式规划，包括离开此地的交通方式")
 class TravelIntentReport(BaseModel):
     """出行意图结构化数据模型"""
     
@@ -26,8 +27,8 @@ class TravelIntentReport(BaseModel):
     confidence: float = Field(default=0, description="意图识别置信度 (0-1)")
     
     # 地址信息
-    origin: str = Field(default_factory=str, description="出发地")
-    destinations: list[Destination]=Field(default_factory=list, description="按时间先后顺序记录旅游地点")
+    origin: Optional[str]= Field(default=None, description="出发地")
+    destinations: Optional[list[Destination]]=Field(default=None, description="按时间先后顺序记录旅游地点")
     # 时间信息
     departure_date: Optional[date] = Field(default=None, description="出发日期")
     departure_time: Optional[time] = Field(default=None, description="出发时间")
@@ -38,18 +39,31 @@ class TravelIntentReport(BaseModel):
     # 出行人员
     person_count: Optional[int] = Field(default=None, description="出行人数")
     # 出行方式
-    transport_mode: str = Field(default_factory=str, description="离开出发地的交通方式，如“高铁”，“自驾”")
+    transport_mode: str|None = Field(default=None, description="离开出发地的交通方式，如“高铁”，“自驾”")
     # 偏好和预算
     budget_per_person: Optional[float] = Field(default=None, description="人均预算")
     
     # 额外需求
-    extra_needs_and_preferences: set[str]|None = Field(default_factory=set, description="多条额外的需求和偏好")
+    extra_needs_and_preferences: set[str]|None = Field(default=None, description="多条额外的需求和偏好")
     
     # 补全标记
     auto_filled_fields: set[str] = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
 
 class TravelIntentInput(BaseModel):
     query: str = Field(description="用户最近一条关于旅行意图的原始自然语言描述")
+
+class TravelIntentSignature(dspy.Signature):
+    """
+    你是一个专业的旅游意图分析专家。
+    任务：
+    1. 将用户提到的相对时间（如“明天”“下周三”）翻译成绝对时间。
+    2. 从输入中提取出行意图，并填充到结构化报告中。
+    """
+    current_date = dspy.InputField(desc="今天的日期和星期")
+    query = dspy.InputField(desc="用户最近一条关于旅行意图的自然语言描述")
+    
+    # 直接使用你的 Pydantic 模型作为输出类型
+    report = dspy.OutputField(desc="生成的结构化 TravelIntentReport 对象")
 
 @tool("get_TravelIntentReport", args_schema=TravelIntentInput)
 async def get_TravelIntentReport(
@@ -76,7 +90,9 @@ async def get_TravelIntentReport(
     
     # 3. 执行
     report = await chain.ainvoke({"input": query})
+    content = "旅行意图报告已成功增量更新。"
     if report is None:
+        content = "旅行意图报告未更新新内容。"
         report = TravelIntentReport()
 
     # 2. 核心：返回 Command 对象
@@ -87,7 +103,7 @@ async def get_TravelIntentReport(
             # 必须包含 ToolMessage，否则 Meta-Agent 会因为收不到工具结果而报错
             "messages": [
                 ToolMessage(
-                    content="旅行意图报告已成功增量更新。", 
+                    content=content, 
                     tool_call_id=tool_call_id
                 )
             ]

@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     
     # ========== LLM 通用配置 ==========
     # 用户可自由设置这些通用字段
-    LLM_API_KEY: Optional[str] = None        # 通用 API Key（优先使用）
-    LLM_BASE_URL: Optional[str] = None       # 通用 API 地址（优先使用）
+    LLM_API_KEY: Optional[str] = None        # 通用 API Key
+    LLM_BASE_URL: Optional[str] = None       # 通用 API 地址
     LLM_MODEL_NAME: str = ""                 # 通用模型名称
     TAVILY_API_KEY: Optional[str] = None
     
