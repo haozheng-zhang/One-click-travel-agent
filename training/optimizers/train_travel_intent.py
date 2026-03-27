@@ -3,8 +3,26 @@ import re
 import dspy
 from dspy.teleprompt import BootstrapFewShot
 from backend.app.utils.travel_intent_parser import TravelIntentReport, TravelParserModule
-from training.data.data import trainset
 from backend.config import settings
+
+# 导入所有训练数据
+from training.data.data import trainset as trainset_0, devset as devset_0
+from training.data.data1 import trainset as trainset_1, devset as devset_1
+from training.data.data2 import trainset as trainset_2, devset as devset_2
+from training.data.data3 import trainset as trainset_3, devset as devset_3
+from training.data.data4 import trainset as trainset_4, devset as devset_4
+from training.data.data5 import trainset as trainset_5, devset as devset_5
+from training.data.data6 import trainset as trainset_6, devset as devset_6
+from training.data.data7 import trainset as trainset_7, devset as devset_7
+from training.data.data8 import trainset as trainset_8, devset as devset_8
+from training.data.data9 import trainset as trainset_9, devset as devset_9
+from training.data.data10 import trainset as trainset_10, devset as devset_10
+
+# 合并所有训练数据
+trainset = (trainset_0 + trainset_1 + trainset_2 + trainset_3 + trainset_4 + 
+            trainset_5 + trainset_6 + trainset_7 + trainset_8 + trainset_9 + trainset_10)
+devset = (devset_0 + devset_1 + devset_2 + devset_3 + devset_4 + 
+          devset_5 + devset_6 + devset_7 + devset_8 + devset_9 + devset_10)
 
 def normalize_loc(text):
     """去掉行政区划后缀"""
@@ -75,5 +93,8 @@ optimizer = BootstrapFewShot(
 )
 
 # 3. 编译：这会触发模型多次调用，自动寻找最佳 Few-shot
+# 使用合并后的训练集进行训练
+print(f"使用 {len(trainset)} 个训练样本进行训练")
 optimized_parser = optimizer.compile(TravelParserModule(), trainset=trainset)
 optimized_parser.save("training/result/travel_parser.json")
+print("模型训练完成，已保存至 training/result/travel_parser.json")

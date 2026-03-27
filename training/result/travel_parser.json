@@ -7,16 +7,16 @@
         "augmented": true,
         "current_date": "2026-03-27",
         "query": "下周三去北京玩四天，两个人，预算八千",
-        "reasoning": "当前日期是2026年3月27日（星期五）。用户查询为“下周三去北京玩四天，两个人，预算八千”。需要进行如下解析和推断：\n1.  时间解析：“下周三”是相对于当前日期的下一个周三。2026-03-27是周五，因此“下周三”是2026-04-01。行程“玩四天”，意味着从出发日期开始计算，持续四天三晚。因此，出发日期为2026-04-01，返回日期为2026-04-04，行程天数为4天。\n2.  出发地与交通方式：用户未明确说明出发地和离开出发地的交通方式（`origin`和`transport_mode`），因此留空。\n3.  具体时间点：用户未指定具体的出发和返回时间点（`departure_time`和`return_time`），因此留空。\n4.  目的地与住宿：目的地是“北京”。用户明确表示去“玩”，意味着需要在外过夜，因此`hotel_needed`应推断为`true`。用户未指定具体酒店，`stay`字段留空。\n5.  景点与门票：用户未提及具体景点和门票需求，因此`attractions`和`ticket_needed`留空。\n6.  当地交通：用户未提及在北京本地的详细交通规划，`transportation`留空。\n7.  出行人数：明确为2人。\n8.  预算：用户提到“预算八千”，结合上下文“两个人”，此预算通常指总预算。因此，人均预算（`budget_per_person`）为8000 / 2 = 4000元。\n9.  额外需求与偏好：用户仅提到了预算，已由专门字段`budget_per_person`记录，因此`extra_needs_and_preferences`列表为空。\n10. 置信度：查询信息明确，时间、地点、天数、人数、预算均清晰，置信度较高，设定为0.9。\n11. 自动补全字段：基于逻辑推断补全了`return_date`、`transport_mode`(null)、`departure_time`(null)、`return_time`(null)、`destinations[0].hotel_needed`(true)等字段。",
+        "reasoning": "解析用户查询：\"下周三去北京玩四天，两个人，预算八千\"。当前日期为2026-03-27。首先，将相对时间转换为绝对时间：\"下周三\"指下一个星期三，当前日期是星期五（2026-03-27），因此下星期三是2026-04-01，作为出发日期。\"玩四天\"表示行程持续4天，设置duration_days为4，并推断返回日期为出发日期后3天（即2026-04-04），以覆盖玩四天的行程。\"两个人\"直接给出person_count为2。\"预算八千\"是总预算，两人人均4000，因此budget_per_person为4000。目的地为北京，未指定出发地、交通方式、具体时间、酒店需求或景点，因此这些字段设为null或默认值。置信度设为0.95，因为查询意图明确。自动推断补全了departure_date、return_date和budget_per_person字段。",
         "report": {
-          "confidence": 0.9,
+          "confidence": 0.95,
           "origin": null,
           "destinations": [
             {
               "location": "北京",
               "attractions": null,
               "stay": null,
-              "hotel_needed": true,
+              "hotel_needed": false,
               "ticket_needed": null,
               "transportation": null
             }
@@ -31,12 +31,80 @@
           "budget_per_person": 4000.0,
           "extra_needs_and_preferences": [],
           "auto_filled_fields": [
-            "departure_time",
             "budget_per_person",
-            "return_time",
-            "return_date",
-            "destinations[0].hotel_needed",
-            "transport_mode"
+            "departure_date",
+            "return_date"
+          ]
+        }
+      },
+      {
+        "augmented": true,
+        "current_date": "2026-03-27",
+        "query": "和家人五一去上海旅游五天，三个人，每人预算五千块",
+        "reasoning": "用户查询提到“五一”，结合当前日期2026-03-27，推断为2026年劳动节5月1日，因此设置departure_date为2026-05-01。查询指定旅游五天，所以根据departure_date计算return_date为2026-05-05。目的地为上海，人数3，人均预算5000。由于行程持续五天，推断需要酒店住宿。从“和家人”中提取额外偏好“家庭出行”。查询中未明确出发地、交通方式、具体景点等，因此相关字段设为null或默认值。",
+        "report": {
+          "confidence": 0.95,
+          "origin": null,
+          "destinations": [
+            {
+              "location": "上海",
+              "attractions": null,
+              "stay": null,
+              "hotel_needed": true,
+              "ticket_needed": null,
+              "transportation": null
+            }
+          ],
+          "departure_date": "2026-05-01",
+          "departure_time": null,
+          "return_date": "2026-05-05",
+          "return_time": null,
+          "duration_days": 5,
+          "person_count": 3,
+          "transport_mode": null,
+          "budget_per_person": 5000.0,
+          "extra_needs_and_preferences": [
+            "家庭出行"
+          ],
+          "auto_filled_fields": [
+            "hotel_needed",
+            "departure_date",
+            "return_date"
+          ]
+        }
+      },
+      {
+        "augmented": true,
+        "current_date": "2026-03-27",
+        "query": "周末想去杭州玩两天，就我一个人，预算不超过两千",
+        "reasoning": "用户查询是“周末想去杭州玩两天，就我一个人，预算不超过两千”。当前日期是2026-03-27，这是一个周五。因此，“周末”指的是2026-03-28（周六）和2026-03-29（周日）。“玩两天”表示行程持续两天，所以出发日期是2026-03-28，返回日期是2026-03-29，行程天数为2。人数为1，人均预算为2000元。目的地是杭州。由于玩两天，可能需要过夜，因此推断需要酒店。未提及出发地、具体景点、交通方式等，这些字段设为null。置信度较高，设为0.9。自动推断的字段包括酒店需求、出发日期、返回日期和行程天数。",
+        "report": {
+          "confidence": 0.9,
+          "origin": null,
+          "destinations": [
+            {
+              "location": "杭州",
+              "attractions": null,
+              "stay": null,
+              "hotel_needed": true,
+              "ticket_needed": null,
+              "transportation": null
+            }
+          ],
+          "departure_date": "2026-03-28",
+          "departure_time": null,
+          "return_date": "2026-03-29",
+          "return_time": null,
+          "duration_days": 2,
+          "person_count": 1,
+          "transport_mode": null,
+          "budget_per_person": 2000.0,
+          "extra_needs_and_preferences": [],
+          "auto_filled_fields": [
+            "duration_days",
+            "hotel_needed",
+            "departure_date",
+            "return_date"
           ]
         }
       }
@@ -66,7 +134,7 @@
   },
   "metadata": {
     "dependency_versions": {
-      "python": "3.12",
+      "python": "3.13",
       "dspy": "3.1.3",
       "cloudpickle": "3.1"
     }
