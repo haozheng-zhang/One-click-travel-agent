@@ -30,5 +30,6 @@ dataset = [
     ).with_inputs('query'), # 明确告诉 DSPy，query 是输入，report 是标签
 ]
 
-trainset = dataset[:7]
-devset = dataset[7:]
+midIndex = len(dataset)//2
+trainset = dataset[:midIndex]
+devset = dataset[midIndex:]

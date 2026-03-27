@@ -6,7 +6,7 @@ from backend.app.utils.travel_intent_parser import TravelIntentReport, TravelPar
 from backend.config import settings
 
 # 导入所有训练数据
-from training.data.data import trainset as trainset_0, devset as devset_0
+from training.data.data0 import trainset as trainset_0, devset as devset_0
 from training.data.data1 import trainset as trainset_1, devset as devset_1
 from training.data.data2 import trainset as trainset_2, devset as devset_2
 from training.data.data3 import trainset as trainset_3, devset as devset_3
@@ -50,12 +50,10 @@ def travel_intent_metric(gold, pred, trace=None):
     # 2. 时间逻辑校验
     date_weight = 3.0
     max_score += date_weight
-    if pred.departure_date <= pred.return_date:
-        score += date_weight * 0.3
     if gold.departure_date == pred.departure_date:
-        score += date_weight * 0.35
+        score += date_weight * 0.5
     if gold.return_date == pred.return_date:
-        score += date_weight * 0.35
+        score += date_weight * 0.5
     
     # 目的地列表匹配
     dest_weight = 3.0
@@ -79,22 +77,32 @@ def travel_intent_metric(gold, pred, trace=None):
     # 归一化浮点数
     final_score = score / max_score
     return final_score
+
 print(settings.LLM_PROVIDER)
 print(settings.LLM_MODEL_NAME)
-lm = dspy.LM(model=settings.LLM_PROVIDER+"/"+settings.LLM_MODEL_NAME, api_key=settings.LLM_API_KEY)
+lm = dspy.LM(model=settings.LLM_PROVIDER+"/"+settings.LLM_MODEL_NAME, api_key=settings.LLM_API_KEY,temperature=0.1)
 deepseek_teacher = dspy.LM(model='deepseek/deepseek-reasoner', api_key=settings.LLM_API_KEY)
 dspy.configure(lm=lm)
 
-optimizer = BootstrapFewShot(
+optimizer = dspy.MIPROv2(
     metric=travel_intent_metric,
-    max_bootstrapped_demos=3,  # 自动生成的例子上限
-    max_labeled_demos=2,       # 直接从你数据里拿的例子上限
-    teacher_settings=dict(lm=deepseek_teacher)
+    prompt_model=deepseek_teacher, 
+    task_model=lm,
+    init_temperature = 1.0, # 思维更发散
+    # num_candidates=10, 
+    num_threads=16,
+    auto="light"
 )
 
-# 3. 编译：这会触发模型多次调用，自动寻找最佳 Few-shot
 # 使用合并后的训练集进行训练
 print(f"使用 {len(trainset)} 个训练样本进行训练")
-optimized_parser = optimizer.compile(TravelParserModule(), trainset=trainset)
+optimized_parser = optimizer.compile(
+    TravelParserModule(),
+    trainset=trainset,
+    valset=devset,
+    max_bootstrapped_demos=3,
+    max_labeled_demos=3,
+    # num_trials=10
+)
 optimized_parser.save("training/result/travel_parser.json")
 print("模型训练完成，已保存至 training/result/travel_parser.json")
