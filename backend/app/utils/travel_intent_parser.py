@@ -3,7 +3,7 @@ import dspy
 from langchain.tools import InjectedToolCallId, tool
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
-from typing import Annotated, Optional,Any
+from typing import Annotated, Optional,Any, override
 from collections import OrderedDict
 from datetime import date, datetime,time
 from backend.app.core import get_llm
@@ -27,24 +27,24 @@ class TravelIntentReport(BaseModel):
     confidence: float = Field(default=0, description="意图识别置信度 (0-1)")
     
     # 地址信息
-    origin: Optional[str]= Field(default=None, description="出发地")
-    destinations: Optional[list[Destination]]=Field(default=None, description="按时间先后顺序记录旅游地点")
+    origin: str|None= Field(default=None, description="出发地")
+    destinations: list[Destination]|None=Field(default=None, description="按时间先后顺序记录旅游地点")
     # 时间信息
-    departure_date: Optional[date] = Field(default=None, description="出发日期")
-    departure_time: Optional[time] = Field(default=None, description="出发时间")
-    return_date: Optional[date] = Field(default=None, description="返回日期")
-    return_time: Optional[time] = Field(default=None, description="返回时间")
-    duration_days: Optional[int] = Field(default=None, description="行程天数")
+    departure_date: date|None = Field(default=None, description="出发日期")
+    departure_time: time|None = Field(default=None, description="出发时间")
+    return_date: date|None = Field(default=None, description="返回日期")
+    return_time: time|None = Field(default=None, description="返回时间")
+    duration_days: int|None = Field(default=None, description="行程天数")
     
     # 出行人员
-    person_count: Optional[int] = Field(default=None, description="出行人数")
+    person_count: int|None = Field(default=None, description="出行人数")
     # 出行方式
     transport_mode: str|None = Field(default=None, description="离开出发地的交通方式，如“高铁”，“自驾”")
     # 偏好和预算
-    budget_per_person: Optional[float] = Field(default=None, description="人均预算")
+    budget_per_person: float|None = Field(default=None, description="人均预算")
     
     # 额外需求
-    extra_needs_and_preferences: set[str]|None = Field(default=None, description="多条额外的需求和偏好")
+    extra_needs_and_preferences: set[str] = Field(default_factory=set, description="多条额外的需求和偏好")
     
     # 补全标记
     auto_filled_fields: set[str] = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
@@ -109,3 +109,40 @@ async def get_TravelIntentReport(
             ]
         }
     )
+
+
+#===============================================================================================
+from dspy import ChainOfThought
+from datetime import date
+
+class TravelIntentExtraction(dspy.Signature):
+    """
+    你是一个专业的旅游意图分析专家。
+    任务：将用户提供的自然语言（可能包含相对时间）解析为结构化的旅行意图报告。
+    """
+    current_date = dspy.InputField(desc="今天的日期，用于转换‘明天’、‘下周’等相对时间为绝对时间")
+    query = dspy.InputField(desc="用户的原始输入文本")
+    
+    # 这里的 TravelIntentReport 是你定义的 Pydantic 类
+    report: TravelIntentReport = dspy.OutputField(desc="生成的结构化意图报告")
+
+
+class TravelParserModule(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        # 使用 TypedPredictor 确保输出严格符合 Pydantic 定义
+        # 建议使用 ChainOfThought 增加推理过程，提升日期转换的准确率
+        self.predictor = ChainOfThought(TravelIntentExtraction)
+    def forward(self,query,current_date=date.today()):
+        return self.predictor(current_date=current_date, query=query)
+    
+def get_TravelIntentReport_tool(query: str):
+    # 初始化
+    parser = TravelParserModule()
+    parser.load("training/result/retravel_parser.json")
+    
+    # 执行推理
+    today = date.today().strftime("%Y-%m-%d")
+    result = parser(current_date=today, query=query)
+    
+    return result.report
