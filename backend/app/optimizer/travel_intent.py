@@ -6,14 +6,14 @@ from backend.app.utils.travel_intent_parser import TravelIntentReport
 def normalize_loc(text):
     """去掉行政区划后缀"""
     if not text: return ""
-    return re.sub(r'(市|省|自治区|特别行政区)$', '', text.strip())
+    return re.sub(r'(市|省|自治区|特别行政区|特区)$', '', text.strip())
 
 def travel_intent_metric(gold, pred, trace=None):
     score = 0
     max_score = 0
     
     # 1. 基础字段校验 (Origin, Person Count, Budget)
-    # 权重设定：基础信息非常重要
+    # 权重设定
     base_weight = 2.0
     max_score += base_weight
     
@@ -23,8 +23,7 @@ def travel_intent_metric(gold, pred, trace=None):
     if gold.person_count == pred.person_count:
         score += base_weight * 0.5
         
-    # 2. 时间逻辑校验 (CRITICAL)
-    # 权重设定：时间错了，整个行程就废了
+    # 2. 时间逻辑校验
     date_weight = 3.0
     max_score += date_weight
     
@@ -35,7 +34,7 @@ def travel_intent_metric(gold, pred, trace=None):
     if gold.return_date == pred.return_date:
         score += date_weight * 0.35
     
-    # 目的地列表匹配 (Set Match)
+    # 目的地列表匹配
     dest_weight = 3.0
     max_score += dest_weight
     
@@ -54,9 +53,6 @@ def travel_intent_metric(gold, pred, trace=None):
     if isinstance(pred, TravelIntentReport):
         score += format_weight
 
-    # 归一化分数回传给 DSPy (0.0 - 1.0)
+    # 归一化浮点数
     final_score = score / max_score
-    
-    # DSPy 优化器通常需要布尔值或浮点数
-    # 如果是为了 MIPROv2 调优，返回浮点数效果更好
     return final_score

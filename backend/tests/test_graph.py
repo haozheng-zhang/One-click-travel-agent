@@ -29,7 +29,7 @@ async def test_travel_agent_stream():
             if event.get("travel_intent"):
                 print(f"[当前意图]: {event['travel_intent'].destinations}")
             if event.get("weather"):
-                print(f"📊 [当前天气]: {event['weather'].repos}")
+                print(f"[当前天气]: {event['weather'].repos}")
     
     print("\n" + "="*20 + " 测试流程结束 " + "="*20)
 
