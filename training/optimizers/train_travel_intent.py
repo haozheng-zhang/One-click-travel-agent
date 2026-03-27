@@ -1,6 +1,7 @@
 from datetime import date
 import re
 import dspy
+from dspy import evaluate
 from dspy.teleprompt import BootstrapFewShot
 from backend.app.utils.travel_intent_parser import TravelIntentReport, TravelParserModule
 from backend.config import settings
@@ -90,7 +91,7 @@ optimizer = dspy.MIPROv2(
     task_model=lm,
     init_temperature = 1.0, # 思维更发散
     # num_candidates=10, 
-    num_threads=16,
+    num_threads=24,
     auto="light"
 )
 
@@ -106,3 +107,9 @@ optimized_parser = optimizer.compile(
 )
 optimized_parser.save("training/result/travel_parser.json")
 print("模型训练完成，已保存至 training/result/travel_parser.json")
+# 评估失败案例的脚本
+for example, prediction, score in evaluate(optimized_parser, devset, return_outputs=True):
+    if score < 0.5:
+        print(f"Query: {example.query}")
+        print(f"Gold: {example.report}")
+        print(f"Pred: {prediction.report}")
