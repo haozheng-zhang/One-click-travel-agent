@@ -3,16 +3,19 @@
 """
 
 import os
+from pathlib import Path
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 # from pydantic import ConfigDict
 
+current_file_path = Path(__file__).resolve().parent
+ENV_FILE_PATH = current_file_path / ".env"
 
 class Settings(BaseSettings):
     """应用配置"""
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
         extra="ignore"  # 忽略额外的环境变量
     )
@@ -32,9 +35,8 @@ class Settings(BaseSettings):
     LLM_API_KEY: Optional[str] = None        # 通用 API Key
     LLM_BASE_URL: Optional[str] = None       # 通用 API 地址
     LLM_MODEL_NAME: str = ""                 # 通用模型名称
+    LLM_PROVIDER:str = ""
     TAVILY_API_KEY: Optional[str] = None
-    
-    # MODEL_NAME: str = "LLM-chat"  # LLM 的聊天模型
     
     # LangChain 配置
     LANGCHAIN_VERBOSE: bool = True
