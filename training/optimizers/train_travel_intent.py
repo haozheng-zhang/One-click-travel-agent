@@ -103,7 +103,7 @@ def travel_intent_metric(gold, pred, trace=None):
         score += base_weight * 0.4
     if gold.person_count == pred.person_count:
         score += base_weight * 0.3
-    if abs(gold.budget_per_person - pred.budget_per_person) / gold.budget_per_person < 0.02:
+    if gold.budget_per_person and pred.budget_per_person and abs(gold.budget_per_person - pred.budget_per_person) / gold.budget_per_person < 0.02:
         score += base_weight * 0.3
 
     # 2. 时间逻辑校验
@@ -193,7 +193,7 @@ if __name__ == "__main__":
         task_model=lm,
         init_temperature = 1.0, # 思维更发散
         # num_candidates=10, 
-        num_threads=24,
+        num_threads=4,
         auto="light"
     )
 

@@ -5,15 +5,15 @@
     "demos": [
       {
         "augmented": true,
-        "current_date": "2026-03-27",
-        "query": "端午节和朋友一起去厦门，三天，六个人，每人预算两千五",
-        "reasoning": "用户查询提到“端午节”去厦门，需要将端午节转换为绝对日期。2026年端午节是2026-06-19。查询中明确指定了行程天数（三天）、出行人数（六人）和人均预算（两千五）。未提及出发地、出发时间、返回时间、交通方式和具体景点。根据行程天数（三天），推断需要酒店住宿。自动补全出发日期（从端午节推断）、返回日期（根据出发日期和行程天数计算）和酒店需求字段。",
+        "current_date": "2026-03-28",
+        "query": "想去秦皇岛海边，两天一晚，情侣两个人，预算三千块钱",
+        "reasoning": "用户查询：“想去秦皇岛海边，两天一晚，情侣两个人，预算三千块钱”。今天是2026-03-28。\n1.  **意图识别**：用户表达了明确的旅游意图，涉及目的地、时长、人数和预算。这是一个典型的旅行规划请求。\n2.  **关键信息提取**：\n    *   **目的地**：明确提到“秦皇岛海边”，因此`location`为“秦皇岛”。`attractions`隐含“海边”，但未指定具体景点，故留空。\n    *   **行程时长**：“两天一晚”表明`duration_days`为2天。由于是短途旅行，通常意味着包含一晚住宿，因此`hotel_needed`应推断为`true`。\n    *   **出发/返回日期**：查询未指定具体日期，只给了时长。因此`departure_date`、`return_date`及相关时间字段均无法确定，留空。\n    *   **出行人数**：“情侣两个人”表明`person_count`为2。\n    *   **预算**：“预算三千块钱”是总预算。由于是两人，`budget_per_person`应为1500。\n    *   **出发地**：查询未提及，留空。\n    *   **交通方式**：查询未提及，留空。\n    *   **额外需求**：查询中未明确提及其他特殊需求或偏好。\n3.  **逻辑推断与补全**：\n    *   根据“两天一晚”推断需要酒店，将`hotel_needed`设为`true`。\n    *   根据总预算和人数计算人均预算。\n    *   记录自动补全的字段到`auto_filled_fields`。\n4.  **置信度评估**：用户提供了目的地、时长、人数和预算等核心信息，意图清晰，置信度较高，设为0.9。",
         "report": {
-          "confidence": 0.95,
-          "origin": null,
+          "confidence": 0.9,
+          "origin": "",
           "destinations": [
             {
-              "location": "厦门",
+              "location": "秦皇岛",
               "attractions": null,
               "stay": null,
               "hotel_needed": true,
@@ -21,60 +21,92 @@
               "transportation": null
             }
           ],
-          "departure_date": "2026-06-19",
+          "departure_date": null,
           "departure_time": null,
-          "return_date": "2026-06-21",
+          "return_date": null,
           "return_time": null,
-          "duration_days": 3,
-          "person_count": 6,
+          "duration_days": 2,
+          "person_count": 2,
           "transport_mode": null,
-          "budget_per_person": 2500.0,
+          "budget_per_person": 1500,
           "extra_needs_and_preferences": [],
           "auto_filled_fields": [
-            "departure_date",
-            "return_date"
+            "destinations[0].hotel_needed",
+            "budget_per_person"
           ]
         }
       },
       {
         "augmented": true,
-        "current_date": "2026-03-27",
-        "query": "四月清明节去杭州西湖游玩，三天两晚，三个人，每人两千块",
-        "reasoning": "用户查询明确提到在四月清明节去杭州西湖游玩，行程三天两晚，三人出行，人均预算两千元。从当前日期2026-03-27推断，清明节是2026-04-04，因此设置出发日期为2026-04-04。行程共三天，所以返回日期为2026-04-06。\"三天两晚\"暗示需要住宿，因此将hotel_needed设为true。目的地为杭州，主要景点是西湖，所以attractions设置为[\"西湖\"]。其他字段如出发地、具体交通方式等未提及，设为null或默认值。意图识别置信度较高，设为0.95。",
+        "current_date": "2026-03-28",
+        "query": "想和室友去武汉体验热干面，两天一晚，三个人，预算一千五一个人",
+        "reasoning": "用户查询：“想和室友去武汉体验热干面，两天一晚，三个人，预算一千五一个人”。分析如下：\n1.  **意图识别**：用户明确表达了旅行意图，目的地是武汉，目的是体验热干面。这是一个明确的旅游规划请求。\n2.  **关键信息提取**：\n    *   **出发地 (origin)**：查询中未提及。根据常识，用户通常从常住地出发，但此处无法推断具体城市。根据任务要求，若未提及则留空字符串。\n    *   **目的地 (destinations)**：武汉。需要创建一个`Destination`对象。\n    *   **行程天数 (duration_days)**：“两天一晚”明确表示行程为2天。\n    *   **出行人数 (person_count)**：“三个人”。\n    *   **人均预算 (budget_per_person)**：“预算一千五一个人”即1500元。\n    *   **出发/返回日期 (departure_date, return_date)**：查询中未提及具体日期或相对时间（如“明天”、“下周”），仅说明了行程时长。因此无法推断具体日期，相关字段应为`null`。\n    *   **交通方式 (transport_mode)**：未提及。\n    *   **目的地详情**：用户提到了“体验热干面”，这可以视为一个旅游活动或偏好，但并非一个具体的、需要按顺序访问的“景点”(attraction)。因此，`attractions`字段应为`null`。其他如`stay`（住宿地点）、`hotel_needed`（是否需要酒店）、`ticket_needed`（门票）、`transportation`（当地交通）均未提及。\n    *   **额外需求和偏好 (extra_needs_and_preferences)**：“体验热干面”可以视为一个明确的旅行偏好，应加入此列表。\n    *   **自动补全字段 (auto_filled_fields)**：根据逻辑，`duration_days`可以从“两天一晚”推断出为2。`budget_per_person`已明确给出。`person_count`已明确给出。因此，这些字段应被记录为自动补全。\n    *   **置信度 (confidence)**：查询意图非常明确，信息具体，置信度很高，设为0.95。",
         "report": {
           "confidence": 0.95,
-          "origin": null,
+          "origin": "",
           "destinations": [
             {
-              "location": "杭州",
-              "attractions": [
-                "西湖"
-              ],
+              "location": "武汉",
+              "attractions": null,
               "stay": null,
-              "hotel_needed": true,
+              "hotel_needed": false,
               "ticket_needed": null,
               "transportation": null
             }
           ],
-          "departure_date": "2026-04-04",
+          "departure_date": null,
           "departure_time": null,
-          "return_date": "2026-04-06",
+          "return_date": null,
           "return_time": null,
-          "duration_days": 3,
+          "duration_days": 2,
           "person_count": 3,
           "transport_mode": null,
-          "budget_per_person": 2000.0,
+          "budget_per_person": 1500,
+          "extra_needs_and_preferences": [
+            "体验热干面"
+          ],
+          "auto_filled_fields": [
+            "duration_days",
+            "person_count",
+            "budget_per_person"
+          ]
+        }
+      },
+      {
+        "augmented": true,
+        "current_date": "2026-03-28",
+        "query": "年假从现在开始休，想去泰国旅游十二天，两个人夫妻，每人四万块",
+        "reasoning": "用户查询：“年假从现在开始休，想去泰国旅游十二天，两个人夫妻，每人四万块”。当前日期是2026-03-28。\n1.  **意图识别**：用户表达了明确的旅行意图，涉及目的地、时长、人数和预算。置信度高。\n2.  **出发地**：查询未明确提及出发地。根据常识，用户很可能从中国出发，但无法从文本中确定具体城市。因此，`origin` 字段应留空。\n3.  **目的地**：明确提到“泰国”。这是一个国家，作为目的地是合理的。`destinations` 数组应包含一个 `location` 为“泰国”的对象。\n4.  **时间信息**：\n    *   `departure_date`: “从现在开始休”意味着出发日期是当前日期，即 **2026-03-28**。\n    *   `duration_days`: 明确提到“十二天”，因此 `duration_days` 为 12。\n    *   `return_date`: 可以根据出发日期和时长计算：2026-03-28 加上 12 天是 **2026-04-08**。\n    *   `departure_time` 和 `return_time` 未提及，留空。\n5.  **人员与预算**：\n    *   `person_count`: “两个人夫妻”，因此为 2。\n    *   `budget_per_person`: “每人四万块”，因此为 40000。\n6.  **其他字段**：\n    *   `transport_mode`: 未提及离开出发地的交通方式，留空。\n    *   `destinations` 下的子字段（`attractions`, `stay`, `hotel_needed`, `ticket_needed`, `transportation`）：查询中均未提供具体信息，按默认值或留空处理。`hotel_needed` 默认为 false，但考虑到是12天的国际旅行，住宿需求是隐含的。然而，根据指令，我们只填充明确提到的信息，因此保持默认。\n    *   `extra_needs_and_preferences`: 查询中未提及额外需求。\n    *   `auto_filled_fields`: 系统根据逻辑推断补全了 `return_date`，因此应包含“return_date”。\n    *   `confidence`: 意图明确，置信度设为 0.95。",
+        "report": {
+          "confidence": 0.95,
+          "origin": "",
+          "destinations": [
+            {
+              "location": "泰国",
+              "attractions": null,
+              "stay": null,
+              "hotel_needed": false,
+              "ticket_needed": null,
+              "transportation": null
+            }
+          ],
+          "departure_date": "2026-03-28",
+          "departure_time": null,
+          "return_date": "2026-04-08",
+          "return_time": null,
+          "duration_days": 12,
+          "person_count": 2,
+          "transport_mode": null,
+          "budget_per_person": 40000,
           "extra_needs_and_preferences": [],
           "auto_filled_fields": [
-            "departure_date",
-            "return_date",
-            "hotel_needed"
+            "return_date"
           ]
         }
       }
     ],
     "signature": {
-      "instructions": "你是一个专业的旅游意图分析专家。\n任务：将用户提供的自然语言（可能包含相对时间）解析为结构化的旅行意图报告。",
+      "instructions": "你是一名专业的旅游意图分析专家。你的核心任务是将用户用中文提供的、可能包含相对时间（如“明天”、“下个月”、“五一”）的自然语言旅行查询，精准地解析并填充到一个结构化的旅行意图报告中。\n\n请严格遵循以下步骤进行推理和生成：\n\n**第一步：接收输入并明确任务**\n- 你将被提供两个关键输入：`Current Date: [YYYY-MM-DD]` 和 `Query: [用户查询文本]`。\n- `Current Date` 是解析相对时间的绝对日期基准。\n- 你的最终目标是生成一个完整的、符合 `TravelIntentReport` 数据结构的报告。\n\n**第二步：进行结构化思维推理**\n在生成最终报告前，你必须先进行逐步推理。请在你的思考（Reasoning）中明确涵盖以下要点：\n1.  **意图与置信度评估**：判断用户是否明确表达了旅行意图，并评估整体解析的置信度（0-1之间）。\n2.  **实体提取**：从查询中直接提取明确提到的信息，包括：\n    - 目的地（`destinations` 中的 `location`）\n    - 出发地（`origin`，若提及）\n    - 人数（`person_count`）\n    - 人均预算（`budget_per_person`）\n    - 行程天数（`duration_days`）\n    - 交通方式（`transport_mode`，若提及）\n    - 具体景点、住宿、门票需求等目的地详情（`attractions`, `stay`, `ticket_needed` 等）\n    - 额外偏好（`extra_needs_and_preferences`，如“和家人”、“和朋友”）\n3.  **时间解析（关键步骤）**：利用给定的 `Current Date`，将所有相对时间或节日名称（如“下个月”、“五一”、“端午节”）转换为绝对的 `departure_date` 和 `return_date`。如果查询未指定具体日期，请基于上下文做出合理推断（例如，“下个月”可推断为下个月的第一天）。\n4.  **逻辑推断与补全**：基于已提取的信息和常识，推断未明确提及但逻辑上必需的字段。例如：\n    - 从多日行程（`duration_days` > 1）推断 `hotel_needed: true`。\n    - 从 `departure_date` 和 `duration_days` 计算 `return_date`。\n    - 从提及的具体景点（如“兵马俑”）推断 `ticket_needed`。\n    - **重要**：所有通过此类推断（而非用户明确提及）补全的字段名称，都必须记录在 `auto_filled_fields` 集合中。\n5.  **处理不确定性**：对于查询中完全未提及且无法合理推断的字段（如未提及的出发地、具体出发时间），应留空（`null` 或空字符串/集合）。\n\n**第三步：生成结构化报告**\n基于你的推理，严格填充 `TravelIntentReport` 的每一个字段。确保：\n- 所有日期字段（`departure_date`, `return_date`）均为 `datetime.date` 对象，格式为 `YYYY-MM-DD`。\n- `destinations` 是一个列表，即使只有一个目的地。\n- `confidence` 是一个浮点数，反映你对解析结果的把握。\n- `auto_filled_fields` 是一个集合（`set`），包含所有由你推断补全的字段名（例如：`{'departure_date', 'return_date', 'hotel_needed'}`）。\n\n**输出格式要求：**\n请先输出“Reasoning:”，接着是你的完整、详细的逐步推理过程。\n然后，在新的一行输出“Report:”，接着是完整的 `TravelIntentReport` 对象表示。\n\n现在，请基于给定的输入，开始你的分析。",
       "fields": [
         {
           "prefix": "Current Date:",
@@ -98,7 +130,7 @@
   },
   "metadata": {
     "dependency_versions": {
-      "python": "3.12",
+      "python": "3.13",
       "dspy": "3.1.3",
       "cloudpickle": "3.1"
     }
