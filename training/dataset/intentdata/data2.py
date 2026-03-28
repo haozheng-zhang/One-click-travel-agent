@@ -4,7 +4,7 @@ from typing import Optional
 import dspy
 
 from backend.app.utils.travel_intent_parser import Destination, TravelIntentReport
-from training.data.data0 import _get_next_weekday
+from training.dataset.intentdata.data0 import _get_next_weekday
 
 
 dataset = [

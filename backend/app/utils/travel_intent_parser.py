@@ -1,15 +1,13 @@
 # from anyio import create_event
 import dspy
 from langchain.tools import InjectedToolCallId, tool
-from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
-from typing import Annotated, Optional,Any, override
-from collections import OrderedDict
-from datetime import date, datetime,time
-from backend.app.core import get_llm
-from langchain_core.prompts import ChatPromptTemplate
+from typing import Annotated
+from datetime import date, time
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
+from dspy import ChainOfThought
+from datetime import date
 
 class Destination(BaseModel):
     """游玩某地的行程规划"""
@@ -52,76 +50,14 @@ class TravelIntentReport(BaseModel):
 class TravelIntentInput(BaseModel):
     query: str = Field(description="用户最近一条关于旅行意图的原始自然语言描述")
 
-class TravelIntentSignature(dspy.Signature):
-    """
-    你是一个专业的旅游意图分析专家。
-    任务：
-    1. 将用户提到的相对时间（如“明天”“下周三”）翻译成绝对时间。
-    2. 从输入中提取出行意图，并填充到结构化报告中。
-    """
-    current_date = dspy.InputField(desc="今天的日期和星期")
-    query = dspy.InputField(desc="用户最近一条关于旅行意图的自然语言描述")
-    
-    # 直接使用你的 Pydantic 模型作为输出类型
-    report = dspy.OutputField(desc="生成的结构化 TravelIntentReport 对象")
-
-@tool("get_TravelIntentReport", args_schema=TravelIntentInput)
-async def get_TravelIntentReport(
-    query: str,
-    tool_call_id: Annotated[str, InjectedToolCallId]
-    ) -> Command:
-    """意图解析专家：将用户的自然语言行程需求转化为结构化的旅行意图报告。
-    请在收到用户输入且分析出需要更新旅行意图报告时的第一时刻单独调用此工具，因为旅行意图报告可能作为其他工具的输入。
-    """
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", (
-            "你是一个专业的旅游意图分析专家。"
-            f"今天的日期是：{date.today()} (星期{date.today().strftime('%A')})。"
-            "请将用户提到的相对时间（如“明天”“下周三”）翻译成绝对时间。"
-            "然后从已翻译的用户输入中提取出行意图，填入TravelIntentReport的字段并返回。"
-            "如果用户没提到某项信息，请保持该字段为默认值。"
-            "如果你对某个字段是猜测的，请将其记录在 auto_filled_fields 中。"
-        )),
-        ("human", "{input}")
-    ])
-    
-    # 2. 绑定结构化输出
-    chain = prompt | get_llm().with_structured_output(TravelIntentReport)
-    
-    # 3. 执行
-    report = await chain.ainvoke({"input": query})
-    content = "旅行意图报告已成功增量更新。"
-    if report is None:
-        content = "旅行意图报告未更新新内容。"
-        report = TravelIntentReport()
-
-    # 2. 核心：返回 Command 对象
-    return Command(
-        update={
-            # 更新 State 中的 travel_intent 字段，触发你定义的 merge 逻辑
-            "travel_intent": report,
-            # 必须包含 ToolMessage，否则 Meta-Agent 会因为收不到工具结果而报错
-            "messages": [
-                ToolMessage(
-                    content=content, 
-                    tool_call_id=tool_call_id
-                )
-            ]
-        }
-    )
-
-
-#===============================================================================================
-from dspy import ChainOfThought
-from datetime import date
-
 class TravelIntentExtraction(dspy.Signature):
     """
     你是一个专业的旅游意图分析专家。
     任务：将用户提供的自然语言（可能包含相对时间）解析为结构化的旅行意图报告。
     """
-    current_date = dspy.InputField(desc="今天的日期，用于转换‘明天’、‘下周’等相对时间为绝对时间")
-    query = dspy.InputField(desc="用户的原始输入文本")
+    current_date:date = dspy.InputField(desc="今天的日期，用于转换‘明天’、‘下周’等相对时间为绝对时间")
+    current_weekday:int = dspy.InputField(desc="今天的星期，用于转换‘明天’、‘下周’等相对时间为绝对时间")
+    query:str = dspy.InputField(desc="用户的原始输入文本")
     
     # 这里的 TravelIntentReport 是你定义的 Pydantic 类
     report: TravelIntentReport = dspy.OutputField(desc="生成的结构化意图报告")
@@ -133,16 +69,37 @@ class TravelParserModule(dspy.Module):
         # 使用 TypedPredictor 确保输出严格符合 Pydantic 定义
         # 建议使用 ChainOfThought 增加推理过程，提升日期转换的准确率
         self.predictor = ChainOfThought(TravelIntentExtraction)
-    def forward(self,query,current_date=date.today()):
-        return self.predictor(current_date=current_date, query=query)
+    def forward(self,query,current_date=date.today(),current_weekday=date.today().strftime('%A')):
+        return self.predictor(current_date=current_date, query=query,current_weekday=current_weekday)
     
-def get_TravelIntentReport_tool(query: str):
+@tool("get_TravelIntentReport", args_schema=TravelIntentInput)
+async def get_TravelIntentReport(
+    query: str,
+    tool_call_id: Annotated[str, InjectedToolCallId]
+    ) -> Command:
+    """意图解析专家：将用户的自然语言行程需求转化为结构化的旅行意图报告。
+    请在收到用户输入且分析出需要更新旅行意图报告时的第一时刻单独调用此工具，因为旅行意图报告可能作为其他工具的输入。
+    """
     # 初始化
     parser = TravelParserModule()
     parser.load("training/result/retravel_parser.json")
     
-    # 执行推理
-    today = date.today().strftime("%Y-%m-%d")
-    result = parser(current_date=today, query=query)
-    
-    return result.report
+    result = parser(query=query)
+    content = "旅行意图报告已成功增量更新。"
+    if result.report is None:
+        content = "旅行意图报告未更新新内容。"
+        result.report = TravelIntentReport()
+    #return result.report
+    return Command(
+        update={
+            # 更新 State 中的 travel_intent 字段，触发 merge 逻辑
+            "travel_intent": result.report,
+            # 必须包含 ToolMessage，否则 Meta-Agent 会因为收不到工具结果而报错
+            "messages": [
+                ToolMessage(
+                    content=content, 
+                    tool_call_id=tool_call_id
+                )
+            ]
+        }
+    )

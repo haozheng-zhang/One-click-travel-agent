@@ -1,4 +1,5 @@
 from datetime import date
+import dspy
 from langchain.tools import tool
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.types import Command
@@ -30,21 +31,32 @@ class WeatherReport(BaseModel):
     message:str= Field(default_factory=str,description="若查询失败则说明失败的原因，若成功则总结这份报告并给出出行建议")
     source:str= Field(default_factory=str,description="天气信息来源，若没有查询到天气则置为空字符串")
 
-async def parse_weather_to_state(raw_text: str) -> WeatherReport|None:
+class WeatherParserSignature(dspy.Signature):
+    """你是一个专业的数值气象学家。你的任务是从杂乱的网页搜索文本中提取出精确、结构化的天气报告。
+    请忽略网页中的广告、无关链接和过期预报。"""
+    query:str=dspy.InputField(desc="请求搜索的天气指令，包含地点和日期")
+    raw_text = dspy.InputField(desc="搜索引擎返回的原始文本")
+    current_date:date = dspy.InputField(desc="当前系统时间，用于校准‘明天’、‘下周’等相对时间")
+    report:WeatherReport = dspy.OutputField(desc="结构化的天气报告对象")
 
-    # 1. 内部调用一个轻量级、高逻辑性的模型（如 gpt-4o-mini）进行结构化
-    parser_prompt = ChatPromptTemplate.from_messages([
-        ("system", "你是一个气象数据提取器。请从提供的文本中提取天气信息并返回 WeatherReport 结构。"),
-        ("human", "{text}")
-    ])
-    
-    # 使用 with_structured_output 确保输出符合 WeatherReport Schema
-    chain = parser_prompt | get_llm().with_structured_output(WeatherReport)
-    report = await chain.ainvoke({"text": raw_text})
-    # if report == None: return WeatherReport()
-    # assert isinstance(report,WeatherReport)
-    assert isinstance(report,WeatherReport|None )
-    return report
+
+class WeatherAgent(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.parser = dspy.ChainOfThought(WeatherParserSignature)
+
+    async def forward(self, query: str, current_date: date=date.today()):
+        # 1. 执行副作用（I/O 搜索）
+        # 注意：在 DSPy 的 forward 中，尽量保持代码同步或妥善处理异步
+        raw_res = await _execute_web_search(query)
+        
+        # 3. 让 LLM 发挥它的“解析”才华
+        prediction = self.parser(
+            query=query,
+            raw_text=raw_res, 
+            current_date=current_date
+        )
+        return prediction
     
 @tool("search_weather_and_parse")
 async def search_weather_and_parse(query: str, tool_call_id: Annotated[str, InjectedToolCallId]):
@@ -53,12 +65,12 @@ async def search_weather_and_parse(query: str, tool_call_id: Annotated[str, Inje
     同时自动更新系统的 weather 状态字段。
     有查询天气的需求时优先调用此工具。
     """
-    raw_res = await _execute_web_search(query)
-    # 内部直接解析，不经过 Meta-Agent 的第二轮思考
-    report = await parse_weather_to_state(raw_res) 
+    parser = WeatherAgent()
+    parser.load("training/result/weather_parser.json")
+    result = parser(query=query)
     return Command(
         update={
-            "weather": report,
+            "weather": result.report,
             "messages": [ToolMessage(content="天气报告已成功结构化并存入系统。", tool_call_id=tool_call_id)]
         }
     )
