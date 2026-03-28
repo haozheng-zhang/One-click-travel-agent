@@ -11,7 +11,7 @@ dataset = [
     dspy.Example(
         query="下个月去西安看兵马俑，三天两晚，五个人一起去，每个人三千块",
         report=TravelIntentReport(
-            origin=None,
+            origin="",
             destinations=[Destination(location="西安")],
             departure_date=date(2026, 4, 15),
             person_count=5,
@@ -19,11 +19,13 @@ dataset = [
         )
     ).with_inputs('query'),
     dspy.Example(
-        query="春节假期想带孩子去南京玩，八天七晚，四个人，预算六千一个人",
+        query="端午假期想带孩子去南京玩，三天二晚，四个人，预算六千一个人",
         report=TravelIntentReport(
-            origin=None,
-            destinations=[Destination(location="南京")],
-            departure_date=date(2026, 1, 29),
+            origin="",
+            destinations=[Destination(location="南京",hotel_needed=True)],
+            departure_date=date(2026, 6, 19),
+            return_date=date(2026, 6, 21),
+
             person_count=4,
             budget_per_person=6000
         )
@@ -31,7 +33,7 @@ dataset = [
     dspy.Example(
         query="最近想去青岛海边放松一下，四天，两个人，预算四千块钱",
         report=TravelIntentReport(
-            origin=None,
+            origin="",
             destinations=[Destination(location="青岛")],
             departure_date=_get_next_weekday(4),
             person_count=2,

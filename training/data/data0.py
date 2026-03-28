@@ -21,7 +21,7 @@ dataset = [
     dspy.Example(
         query="下周三去北京玩四天，两个人，预算八千",
         report=TravelIntentReport(
-            origin=None,
+            origin="",
             destinations=[Destination(location="北京")],
             departure_date=_get_next_weekday(2),
             person_count=2,

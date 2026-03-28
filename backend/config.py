@@ -34,8 +34,14 @@ class Settings(BaseSettings):
     # 用户可自由设置这些通用字段
     LLM_API_KEY: Optional[str] = None        # 通用 API Key
     LLM_BASE_URL: Optional[str] = None       # 通用 API 地址
-    LLM_MODEL_NAME: str = ""                 # 通用模型名称
-    LLM_PROVIDER:str = ""
+    LLM_MODEL_NAME: str=""          # 通用模型名称
+    LLM_PROVIDER:str=""  
+
+    TEACH_API_KEY:Optional[str] = None
+    TEACH_BASE_URL:Optional[str] = None
+    TEACH_MODEL_NAME:str=""  
+    TEACH_PROVIDER:str=""  
+
     TAVILY_API_KEY: Optional[str] = None
     
     # LangChain 配置

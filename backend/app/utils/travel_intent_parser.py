@@ -14,8 +14,8 @@ from langgraph.types import Command
 class Destination(BaseModel):
     """游玩某地的行程规划"""
     location:str=Field(default_factory=str, description="目的地，如“天津”")
-    attractions:OrderedDict[str,datetime]|None=Field(default=None, description="按时间先后顺序记录旅游景点及到访时间")
-    stay:str|None=Field(default=None, description="用户居住于此的方式，如“某某酒店”，未知则留空，没有则填“无”")
+    attractions:list[str]|None=Field(default=None, description="按到访时间顺序记录此地的旅游景点")
+    stay:str|None=Field(default=None, description="用户居住于此的方式，如“某某酒店”，未知则留空")
     hotel_needed: bool = Field(default=False, description="是否需要预订酒店")
     ticket_needed: list[str]|None = Field(default=None, description="需要预定景点门票的景点列表")
     transportation:str|None=Field(default=None,description="详细叙述在此地的交通方式规划，包括离开此地的交通方式")
@@ -27,8 +27,8 @@ class TravelIntentReport(BaseModel):
     confidence: float = Field(default=0, description="意图识别置信度 (0-1)")
     
     # 地址信息
-    origin: str|None= Field(default=None, description="出发地")
-    destinations: list[Destination]|None=Field(default=None, description="按时间先后顺序记录旅游地点")
+    origin: str= Field(default_factory=str, description="出发地")
+    destinations: list[Destination]=Field(default_factory=list, description="按时间先后顺序记录旅游地点")
     # 时间信息
     departure_date: date|None = Field(default=None, description="出发日期")
     departure_time: time|None = Field(default=None, description="出发时间")
@@ -40,14 +40,14 @@ class TravelIntentReport(BaseModel):
     person_count: int|None = Field(default=None, description="出行人数")
     # 出行方式
     transport_mode: str|None = Field(default=None, description="离开出发地的交通方式，如“高铁”，“自驾”")
-    # 偏好和预算
-    budget_per_person: float|None = Field(default=None, description="人均预算")
+    # 预算
+    budget_per_person: int|None = Field(default=None, description="人均预算")
     
     # 额外需求
-    extra_needs_and_preferences: set[str] = Field(default_factory=set, description="多条额外的需求和偏好")
+    extra_needs_and_preferences: set[str]|None = Field(default_factory=set, description="多条额外的需求和偏好")
     
     # 补全标记
-    auto_filled_fields: set[str] = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
+    auto_filled_fields: set[str]|None = Field(default_factory=set, description="自动逻辑推断补全的字段列表")
 
 class TravelIntentInput(BaseModel):
     query: str = Field(description="用户最近一条关于旅行意图的原始自然语言描述")
