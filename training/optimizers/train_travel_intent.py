@@ -1,5 +1,6 @@
 from datetime import date
 import importlib
+import json
 import re
 import threading
 import dspy
@@ -14,7 +15,7 @@ from backend.config import settings
 # 导入所有训练数据
 trainset, devset = [], []
 for i in range(11):
-    module = importlib.import_module(f"training.data.data{i}")
+    module = importlib.import_module(f"training.dataset.intentdata.data{i}")
     trainset.extend(module.trainset)
     devset.extend(module.devset)
 
@@ -188,6 +189,32 @@ def travel_intent_metric(gold, pred, trace=None):
     final_score = score / max_score
     return final_score
 
+def get_report_diff(gold_dict, pred_dict):
+    """比较两个字典，目的地不同则全量打印，其他字段按需对比"""
+    diffs = []
+    
+    # 1. 处理目的地（Destinations）- 只要内容不同，就全量对比
+    g_dests = gold_dict.get("destinations", [])
+    p_dests = pred_dict.get("destinations", [])
+    
+    if g_dests != p_dests:
+        diffs.append("\n[Destinations 整体冲突]:")
+        diffs.append(f"  Gold: {json.dumps(g_dests, ensure_ascii=False)}")
+        diffs.append(f"  Pred: {json.dumps(p_dests, ensure_ascii=False)}")
+        diffs.append("") # 留空行增加可读性
+
+    # 2. 检查其他顶层字段（过滤掉已经处理过的 destinations）
+    all_keys = (set(gold_dict.keys()) | set(pred_dict.keys())) - {"destinations"}
+    
+    for key in sorted(all_keys):
+        g_val = gold_dict.get(key)
+        p_val = pred_dict.get(key)
+        
+        if g_val != p_val:
+            diffs.append(f"  [{key}]: Gold={g_val} vs Pred={p_val}")
+                
+    return "\n".join(diffs) if diffs else "  (无结构化差异)"
+
 log_lock = threading.Lock()
 
 def file_logging_metric(gold, pred, trace=None):
@@ -197,9 +224,7 @@ def file_logging_metric(gold, pred, trace=None):
         with log_lock:
             with open("training/result/failure_cases.log", "a", encoding="utf-8") as f:
                 f.write(f"Query: {gold.query} | Score: {score:.2f}\n")
-                if pred and hasattr(pred, 'report'):
-                    f.write(f"  Pred: {pred.report.model_dump_json(indent=2)}\n")
-                f.write(f"  Gold: {gold.report.model_dump_json(indent=2)}\n")
+                f.write(f"  Pred: {get_report_diff(gold.report.model_dump(), pred.report.model_dump())}\n")
                 f.write("-" * 50 + "\n")
     return score
 
@@ -210,6 +235,10 @@ if __name__ == "__main__":
     student_lm = dspy.LM(model=settings.LLM_PROVIDER+"/"+settings.LLM_MODEL_NAME, api_key=settings.LLM_API_KEY,temperature=0,api_base=settings.LLM_BASE_URL,cache=True)
     teacher_lm = dspy.LM(model=settings.TEACH_PROVIDER+"/"+settings.TEACH_MODEL_NAME, api_key=settings.TEACH_API_KEY,api_base=settings.TEACH_BASE_URL,cache=True)
     dspy.configure(lm=student_lm)
+    student_res = student_lm("Hi, say 'Student OK'", max_tokens=10)
+    print(f"✅ Student Response: {student_res[0]}")
+    teacher_res = teacher_lm("Hi, say 'Teacher OK'", max_tokens=10)
+    print(f"✅ Teacher Response: {teacher_res[0]}")
 
     optimizer = dspy.MIPROv2(
         metric=file_logging_metric,
