@@ -29,10 +29,15 @@ dataset = [
     dspy.Example(
         query="十一放假带孩子去迪士尼乐园，四天，五个人全家出动，预算五万块",
         report=TravelIntentReport(
-            destinations=[Destination(location="上海",attractions=list(["迪士尼乐园"]))],
+            origin="北京",
+            destinations=[Destination(location="上海", attractions=["迪士尼乐园"], hotel_needed=True, ticket_needed=["迪士尼乐园"])],
             departure_date=date(2026, 10, 1),
+            return_date=date(2026, 10, 4),
+            duration_days=4,
             person_count=5,
-            budget_per_person=10000
+            budget_per_person=10000,
+            extra_needs_and_preferences={"儿童友好", "家庭旅游"},
+            auto_filled_fields={"departure_date", "origin", "return_date", "ticket_needed", "extra_needs_and_preferences", "hotel_needed", "budget_per_person"}
         )
     ).with_inputs('query'),
 ]

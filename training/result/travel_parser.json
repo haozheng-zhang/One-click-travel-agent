@@ -2,116 +2,17 @@
   "predictor.predict": {
     "traces": [],
     "train": [],
-    "demos": [
-      {
-        "augmented": true,
-        "current_date": "2026-03-28",
-        "query": "端午节和朋友一起去厦门，三天，六个人，每人预算两千五",
-        "reasoning": "用户计划在端午节期间与朋友一起去厦门旅行，行程为三天，共有六人同行，每人预算为2500元。根据当前日期（2026-03-28），我们需要确定端午节的具体日期以计算出发和返回日期。通常情况下，端午节是农历五月初五，但具体公历日期每年不同。为了简化处理，我们假设2026年的端午节在6月10日左右。因此，用户的出发日期可能设定为2026年6月10日，返回日期为2026年6月12日。",
-        "report": {
-          "confidence": 0.9,
-          "origin": "",
-          "destinations": [
-            {
-              "location": "厦门",
-              "attractions": null,
-              "stay": null,
-              "hotel_needed": true,
-              "ticket_needed": null,
-              "transportation": null
-            }
-          ],
-          "departure_date": "2026-06-10",
-          "departure_time": null,
-          "return_date": "2026-06-12",
-          "return_time": null,
-          "duration_days": 3,
-          "person_count": 6,
-          "transport_mode": null,
-          "budget_per_person": 2500,
-          "extra_needs_and_preferences": [],
-          "auto_filled_fields": [
-            "return_date",
-            "departure_date"
-          ]
-        }
-      },
-      {
-        "augmented": true,
-        "current_date": "2026-03-28",
-        "query": "四月清明节去杭州西湖游玩，三天两晚，三个人，每人两千块",
-        "reasoning": "根据用户提供的信息，我们可以解析出以下关键点：目的地是杭州西湖，活动时间是四月清明节，行程为三天两晚，出行人数为三人，每人预算为两千块。由于当前日期为2026-03-28，清明节通常在4月初，因此出发日期应为2026年4月的清明节当天。此外，报告中未提及具体的交通方式、住宿和景点门票需求等信息，因此这些字段将保持默认值或为空。",
-        "report": {
-          "confidence": 1.0,
-          "origin": "",
-          "destinations": [
-            {
-              "location": "杭州",
-              "attractions": [
-                "西湖"
-              ],
-              "stay": null,
-              "hotel_needed": true,
-              "ticket_needed": null,
-              "transportation": null
-            }
-          ],
-          "departure_date": "2026-04-05",
-          "departure_time": null,
-          "return_date": "2026-04-07",
-          "return_time": null,
-          "duration_days": 3,
-          "person_count": 3,
-          "transport_mode": null,
-          "budget_per_person": 2000,
-          "extra_needs_and_preferences": [],
-          "auto_filled_fields": [
-            "return_date",
-            "duration_days",
-            "departure_date"
-          ]
-        }
-      },
-      {
-        "query": "想和室友去武汉体验热干面，两天一晚，三个人，预算一千五一个人",
-        "report": {
-          "confidence": 0.0,
-          "origin": "",
-          "destinations": [
-            {
-              "location": "武汉",
-              "attractions": null,
-              "stay": null,
-              "hotel_needed": false,
-              "ticket_needed": null,
-              "transportation": null
-            }
-          ],
-          "departure_date": "2026-03-29",
-          "departure_time": null,
-          "return_date": null,
-          "return_time": null,
-          "duration_days": null,
-          "person_count": 3,
-          "transport_mode": null,
-          "budget_per_person": 1500,
-          "extra_needs_and_preferences": [
-            "热",
-            "体",
-            "验",
-            "面",
-            "干"
-          ],
-          "auto_filled_fields": []
-        }
-      }
-    ],
+    "demos": [],
     "signature": {
-      "instructions": "作为专业的旅游意图分析专家，你的核心任务是根据给定的当前日期和用户的中文自然语言查询（可能包含‘明天’、‘下个月’或‘端午节’等相对时间表达），生成一个结构化的旅行意图报告。在响应时，请遵循以下步骤：首先，进行详细的逐步推理，利用当前日期将相对时间精确转换为绝对日期，并系统分析查询中的目的地、景点、人数、预算等关键要素。推理过程应清晰透明，解释你的思考逻辑。然后，基于推理结果，生成一个完整的结构化报告，确保涵盖所有必需字段（如信心度、出发和返回日期、持续时间、目的地列表、人数、预算等），并严格符合预定义的数据模式。如果某些信息未在查询中明确提及，请合理推断或设置为null，同时在报告中标注自动填充的字段。保持解析的准确性和一致性，以支持下游应用。",
+      "instructions": "You are a meticulous and expert travel intent analyst. Your task is to parse a user's natural language travel query, which may contain relative time references (e.g., \"tomorrow,\" \"next month,\" or holidays like \"Labor Day\" or \"Dragon Boat Festival\"), and convert it into a structured travel intent report. You will be provided with the current date and current weekday to accurately resolve these relative time expressions into absolute calendar dates.\n\nFollow this step-by-step reasoning process to ensure accuracy and completeness:\n1.  **Identify Intent and Confidence:** Determine if the user's query expresses a clear travel planning intent. Assess the clarity and assign a confidence score between 0 and 1.\n2.  **Extract Core Information:** Systematically extract all mentioned details: destination(s), travel dates (departure and return), duration, number of travelers, budget per person, transportation preferences, accommodation needs, ticket requirements, and any additional preferences or constraints (e.g., \"with family,\" \"for business\").\n3.  **Resolve Relative Time:** Use the provided `current_date` and `current_weekday` to convert any relative time phrases or holiday names into specific, absolute dates (YYYY-MM-DD format). If a specific day within a month is not mentioned (e.g., \"next month\"), make a reasonable default assumption (e.g., the first day of that month) and note this inference.\n4.  **Handle Missing Information:** For fields not explicitly mentioned in the query (such as `origin` or specific `transport_mode`), leave them as empty strings (`\"\"`), `null`, or appropriate default values as defined by the output schema. Do not invent unsupported details.\n5.  **Apply Logical Inferences:** Deduce and fill in logically connected fields. For example:\n    *   If a `duration_days` is given but `return_date` is not, calculate the `return_date` from the `departure_date` and `duration`.\n    *   If a multi-day trip is mentioned, infer that `hotel_needed` is `true`.\n    *   If a specific attraction is named (e.g., \"see the Terracotta Army\"), infer that `ticket_needed` includes that attraction.\n6.  **List Auto-filled Fields:** Clearly document which fields in the final report were inferred or calculated by you (not explicitly stated by the user) in the `auto_filled_fields` set.\n7.  **Structure the Output:** Format the final output strictly according to the required `TravelIntentReport` schema, ensuring all data types and structures are correct.\n\nProvide your final answer in two parts:\n- **Reasoning:** A concise, step-by-step explanation in Chinese of your analysis, following the template \"Let's think step by step in order to...\". Detail how you interpreted the query, resolved times, extracted data, and made inferences.\n- **Report:** The complete, structured `TravelIntentReport` object containing all extracted and inferred fields.",
       "fields": [
         {
           "prefix": "Current Date:",
           "description": "今天的日期，用于转换‘明天’、‘下周’等相对时间为绝对时间"
+        },
+        {
+          "prefix": "Current Weekday:",
+          "description": "今天的星期，用于转换‘明天’、‘下周’等相对时间为绝对时间"
         },
         {
           "prefix": "Query:",
@@ -131,7 +32,7 @@
   },
   "metadata": {
     "dependency_versions": {
-      "python": "3.12",
+      "python": "3.13",
       "dspy": "3.1.3",
       "cloudpickle": "3.1"
     }

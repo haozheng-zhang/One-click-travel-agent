@@ -17,10 +17,15 @@ dataset = [
     dspy.Example(
         query="下个月公司团建去三亚，五天四晚，一百人参加，每人两千块",
         report=TravelIntentReport(
-            destinations=[Destination(location="三亚")],
-            departure_date=date(2026, 4, 20),
+            origin="北京",
+            destinations=[Destination(location="三亚", hotel_needed=True)],
+            departure_date=date(2026, 4, 1),
+            return_date=date(2026, 4, 5),
+            duration_days=5,
             person_count=100,
-            budget_per_person=2000
+            budget_per_person=2000,
+            extra_needs_and_preferences={"公司团建"},
+            auto_filled_fields={"origin"}
         )
     ).with_inputs('query'),
     dspy.Example(

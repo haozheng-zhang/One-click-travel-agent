@@ -23,9 +23,12 @@ dataset = [
         report=TravelIntentReport(
             origin="",
             destinations=[Destination(location="长沙")],
+            departure_date=date(2026, 7, 1),
+            return_date=date(2026, 7, 7),
             duration_days=7,
             person_count=5,
-            budget_per_person=4000
+            budget_per_person=4000,
+            auto_filled_fields={"return_date", "duration_days", "departure_date"}
         )
     ).with_inputs('query'),
     dspy.Example(

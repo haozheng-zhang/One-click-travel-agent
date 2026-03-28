@@ -29,10 +29,15 @@ dataset = [
     dspy.Example(
         query="秋天自驾去新疆游玩，二十天，四个人，预算两万一个人",
         report=TravelIntentReport(
-            destinations=[Destination(location="新疆")],
-            departure_date=date(2026, 9, 1),
+            origin="",
+            destinations=[Destination(location="新疆", hotel_needed=True)],
+            departure_date=None,
+            duration_days=20,
             person_count=4,
-            budget_per_person=20000
+            transport_mode="自驾",
+            budget_per_person=20000,
+            extra_needs_and_preferences={"自驾游"},
+            auto_filled_fields={"hotel_needed"}
         )
     ).with_inputs('query'),
 ]

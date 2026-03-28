@@ -29,10 +29,15 @@ dataset = [
     dspy.Example(
         query="寒假和朋友去重庆火锅之旅，五天，八个人，每人预算四千块",
         report=TravelIntentReport(
+            origin="未知",
             destinations=[Destination(location="重庆")],
-            departure_date=date(2026, 2, 1),
+            departure_date=date(2027, 1, 20),
+            return_date=date(2027, 1, 24),
+            duration_days=5,
             person_count=8,
-            budget_per_person=4000
+            budget_per_person=4000,
+            extra_needs_and_preferences={"火锅美食之旅"},
+            auto_filled_fields={"origin"}
         )
     ).with_inputs('query'),
 ]

@@ -12,10 +12,13 @@ dataset = [
         query="下个月去西安看兵马俑，三天两晚，五个人一起去，每个人三千块",
         report=TravelIntentReport(
             origin="",
-            destinations=[Destination(location="西安")],
-            departure_date=date(2026, 4, 15),
+            destinations=[Destination(location="西安", attractions=["兵马俑"], hotel_needed=True, ticket_needed=["兵马俑"])],
+            departure_date=date(2026, 4, 1),
+            return_date=date(2026, 4, 3),
+            duration_days=3,
             person_count=5,
-            budget_per_person=3000
+            budget_per_person=3000,
+            auto_filled_fields={"departure_date", "return_date", "ticket_needed", "hotel_needed", "duration_days"}
         )
     ).with_inputs('query'),
     dspy.Example(
