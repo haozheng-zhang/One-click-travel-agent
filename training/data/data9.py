@@ -29,7 +29,7 @@ dataset = [
     dspy.Example(
         query="十一放假带孩子去迪士尼乐园，四天，五个人全家出动，预算五万块",
         report=TravelIntentReport(
-            destinations=[Destination(location="上海")],
+            destinations=[Destination(location="上海",attractions=list(["迪士尼乐园"]))],
             departure_date=date(2026, 10, 1),
             person_count=5,
             budget_per_person=10000

@@ -1,8 +1,5 @@
 from datetime import date, timedelta
-from typing import Optional
-
 import dspy
-
 from backend.app.utils.travel_intent_parser import Destination, TravelIntentReport
 from training.data.data0 import _get_next_weekday
 
@@ -31,7 +28,6 @@ dataset = [
             destinations=[Destination(location="三亚")],
             departure_date=date(2026, 12, 1),
             person_count=4,
-            budget_per_person=5000
         )
     ).with_inputs('query'),
 ]

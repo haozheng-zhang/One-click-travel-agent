@@ -1,6 +1,7 @@
 from datetime import date
 import importlib
 import re
+import threading
 import dspy
 from dspy import evaluate
 from dspy.teleprompt import BootstrapFewShot
@@ -79,7 +80,7 @@ def _validate_destination(gold_dest, pred_dest):
     return score
 
 def travel_intent_metric(gold, pred, trace=None):
-    """评估函数，用于评估结果的正确性"""
+    """评估函数"""
     if pred is None:
         return 0
     try:
@@ -101,10 +102,18 @@ def travel_intent_metric(gold, pred, trace=None):
     # 出发地
     if token_set_ratio(gold.origin,pred.origin)>85:
         score += base_weight * 0.4
+    if gold.person_count is None and gold.person_count is None:
+        score += base_weight * 0.3
     if gold.person_count == pred.person_count:
         score += base_weight * 0.3
-    if abs(gold.budget_per_person - pred.budget_per_person) / gold.budget_per_person < 0.02:
+
+    if gold.budget_per_person is None and pred.budget_per_person is None:
         score += base_weight * 0.3
+    elif gold.budget_per_person is not None and pred.budget_per_person is not None:
+        if abs(gold.budget_per_person - pred.budget_per_person) / gold.budget_per_person < 0.02:
+            score += base_weight * 0.3
+    else:
+        pass
 
     # 2. 时间逻辑校验
     date_weight = 3.0
@@ -179,18 +188,33 @@ def travel_intent_metric(gold, pred, trace=None):
     final_score = score / max_score
     return final_score
 
-if __name__ == "__main__":
+log_lock = threading.Lock()
+
+def file_logging_metric(gold, pred, trace=None):
+    score = travel_intent_metric(gold, pred, trace)
     
+    if score < 0.5:
+        with log_lock:
+            with open("training/result/failure_cases.log", "a", encoding="utf-8") as f:
+                f.write(f"Query: {gold.query} | Score: {score:.2f}\n")
+                if pred and hasattr(pred, 'report'):
+                    f.write(f"  Pred: {pred.report.model_dump_json(indent=2)}\n")
+                f.write(f"  Gold: {gold.report.model_dump_json(indent=2)}\n")
+                f.write("-" * 50 + "\n")
+    return score
+
+if __name__ == "__main__":
+
     print(settings.LLM_PROVIDER)
     print(settings.LLM_MODEL_NAME)
-    lm = dspy.LM(model=settings.LLM_PROVIDER+"/"+settings.LLM_MODEL_NAME, api_key=settings.LLM_API_KEY,temperature=0,api_base=settings.LLM_BASE_URL,cache=True)
-    teacher = dspy.LM(model=settings.TEACH_PROVIDER+"/"+settings.TEACH_MODEL_NAME, api_key=settings.TEACH_API_KEY,api_base=settings.TEACH_BASE_URL,cache=True)
-    dspy.configure(lm=lm)
+    student_lm = dspy.LM(model=settings.LLM_PROVIDER+"/"+settings.LLM_MODEL_NAME, api_key=settings.LLM_API_KEY,temperature=0,api_base=settings.LLM_BASE_URL,cache=True)
+    teacher_lm = dspy.LM(model=settings.TEACH_PROVIDER+"/"+settings.TEACH_MODEL_NAME, api_key=settings.TEACH_API_KEY,api_base=settings.TEACH_BASE_URL,cache=True)
+    dspy.configure(lm=student_lm)
 
     optimizer = dspy.MIPROv2(
-        metric=travel_intent_metric,
-        prompt_model=teacher, 
-        task_model=lm,
+        metric=file_logging_metric,
+        prompt_model=teacher_lm, 
+        task_model=student_lm,
         init_temperature = 1.0, # 思维更发散
         # num_candidates=10, 
         num_threads=24,
@@ -211,9 +235,3 @@ if __name__ == "__main__":
     )
     optimized_parser.save("training/result/travel_parser.json")
     print("模型训练完成，已保存至 training/result/travel_parser.json")
-    # 评估失败案例的脚本
-    # for example, prediction, score in evaluate(optimized_parser, devset, return_outputs=True):
-    #     if score < 0.5:
-    #         print(f"Query: {example.query}")
-    #         print(f"Gold: {example.report}")
-    #         print(f"Pred: {prediction.report}")

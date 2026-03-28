@@ -13,9 +13,8 @@ dataset = [
         report=TravelIntentReport(
             origin="",
             destinations=[Destination(location="武汉")],
-            departure_date=_get_next_weekday(6),
             person_count=3,
-            extra_needs_and_preferences=set("体验热干面"),
+            extra_needs_and_preferences=set(["热干面"]),
             budget_per_person=1500
         )
     ).with_inputs('query'),
@@ -24,7 +23,7 @@ dataset = [
         report=TravelIntentReport(
             origin="",
             destinations=[Destination(location="长沙")],
-            departure_date=date(2026, 8, 15),
+            duration_days=7,
             person_count=5,
             budget_per_person=4000
         )

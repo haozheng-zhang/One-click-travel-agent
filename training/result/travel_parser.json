@@ -5,12 +5,12 @@
     "demos": [
       {
         "augmented": true,
-        "current_date": "2026-03-27",
+        "current_date": "2026-03-28",
         "query": "端午节和朋友一起去厦门，三天，六个人，每人预算两千五",
-        "reasoning": "用户查询提到“端午节”去厦门，需要将端午节转换为绝对日期。2026年端午节是2026-06-19。查询中明确指定了行程天数（三天）、出行人数（六人）和人均预算（两千五）。未提及出发地、出发时间、返回时间、交通方式和具体景点。根据行程天数（三天），推断需要酒店住宿。自动补全出发日期（从端午节推断）、返回日期（根据出发日期和行程天数计算）和酒店需求字段。",
+        "reasoning": "用户计划在端午节期间与朋友一起去厦门旅行，行程为三天，共有六人同行，每人预算为2500元。根据当前日期（2026-03-28），我们需要确定端午节的具体日期以计算出发和返回日期。通常情况下，端午节是农历五月初五，但具体公历日期每年不同。为了简化处理，我们假设2026年的端午节在6月10日左右。因此，用户的出发日期可能设定为2026年6月10日，返回日期为2026年6月12日。",
         "report": {
-          "confidence": 0.95,
-          "origin": null,
+          "confidence": 0.9,
+          "origin": "",
           "destinations": [
             {
               "location": "厦门",
@@ -21,29 +21,29 @@
               "transportation": null
             }
           ],
-          "departure_date": "2026-06-19",
+          "departure_date": "2026-06-10",
           "departure_time": null,
-          "return_date": "2026-06-21",
+          "return_date": "2026-06-12",
           "return_time": null,
           "duration_days": 3,
           "person_count": 6,
           "transport_mode": null,
-          "budget_per_person": 2500.0,
+          "budget_per_person": 2500,
           "extra_needs_and_preferences": [],
           "auto_filled_fields": [
-            "departure_date",
-            "return_date"
+            "return_date",
+            "departure_date"
           ]
         }
       },
       {
         "augmented": true,
-        "current_date": "2026-03-27",
+        "current_date": "2026-03-28",
         "query": "四月清明节去杭州西湖游玩，三天两晚，三个人，每人两千块",
-        "reasoning": "用户查询明确提到在四月清明节去杭州西湖游玩，行程三天两晚，三人出行，人均预算两千元。从当前日期2026-03-27推断，清明节是2026-04-04，因此设置出发日期为2026-04-04。行程共三天，所以返回日期为2026-04-06。\"三天两晚\"暗示需要住宿，因此将hotel_needed设为true。目的地为杭州，主要景点是西湖，所以attractions设置为[\"西湖\"]。其他字段如出发地、具体交通方式等未提及，设为null或默认值。意图识别置信度较高，设为0.95。",
+        "reasoning": "根据用户提供的信息，我们可以解析出以下关键点：目的地是杭州西湖，活动时间是四月清明节，行程为三天两晚，出行人数为三人，每人预算为两千块。由于当前日期为2026-03-28，清明节通常在4月初，因此出发日期应为2026年4月的清明节当天。此外，报告中未提及具体的交通方式、住宿和景点门票需求等信息，因此这些字段将保持默认值或为空。",
         "report": {
-          "confidence": 0.95,
-          "origin": null,
+          "confidence": 1.0,
+          "origin": "",
           "destinations": [
             {
               "location": "杭州",
@@ -56,25 +56,58 @@
               "transportation": null
             }
           ],
-          "departure_date": "2026-04-04",
+          "departure_date": "2026-04-05",
           "departure_time": null,
-          "return_date": "2026-04-06",
+          "return_date": "2026-04-07",
           "return_time": null,
           "duration_days": 3,
           "person_count": 3,
           "transport_mode": null,
-          "budget_per_person": 2000.0,
+          "budget_per_person": 2000,
           "extra_needs_and_preferences": [],
           "auto_filled_fields": [
-            "departure_date",
             "return_date",
-            "hotel_needed"
+            "duration_days",
+            "departure_date"
           ]
+        }
+      },
+      {
+        "query": "想和室友去武汉体验热干面，两天一晚，三个人，预算一千五一个人",
+        "report": {
+          "confidence": 0.0,
+          "origin": "",
+          "destinations": [
+            {
+              "location": "武汉",
+              "attractions": null,
+              "stay": null,
+              "hotel_needed": false,
+              "ticket_needed": null,
+              "transportation": null
+            }
+          ],
+          "departure_date": "2026-03-29",
+          "departure_time": null,
+          "return_date": null,
+          "return_time": null,
+          "duration_days": null,
+          "person_count": 3,
+          "transport_mode": null,
+          "budget_per_person": 1500,
+          "extra_needs_and_preferences": [
+            "热",
+            "体",
+            "验",
+            "面",
+            "干"
+          ],
+          "auto_filled_fields": []
         }
       }
     ],
     "signature": {
-      "instructions": "你是一个专业的旅游意图分析专家。\n任务：将用户提供的自然语言（可能包含相对时间）解析为结构化的旅行意图报告。",
+      "instructions": "作为专业的旅游意图分析专家，你的核心任务是根据给定的当前日期和用户的中文自然语言查询（可能包含‘明天’、‘下个月’或‘端午节’等相对时间表达），生成一个结构化的旅行意图报告。在响应时，请遵循以下步骤：首先，进行详细的逐步推理，利用当前日期将相对时间精确转换为绝对日期，并系统分析查询中的目的地、景点、人数、预算等关键要素。推理过程应清晰透明，解释你的思考逻辑。然后，基于推理结果，生成一个完整的结构化报告，确保涵盖所有必需字段（如信心度、出发和返回日期、持续时间、目的地列表、人数、预算等），并严格符合预定义的数据模式。如果某些信息未在查询中明确提及，请合理推断或设置为null，同时在报告中标注自动填充的字段。保持解析的准确性和一致性，以支持下游应用。",
       "fields": [
         {
           "prefix": "Current Date:",
